@@ -1,0 +1,14 @@
+---
+description: Feature/core architecture and SOLID for Life Daily
+alwaysApply: true
+---
+
+# Architecture
+
+- Feature-first: `lib/features/<feature>/{bindings,controllers,models,pages,widgets}`.
+- Shared only in `lib/core` (theme, localization, storage, errors) and `lib/shared/widgets`.
+- Composition root: `lib/app` + `lib/main.dart`. Core must not import features except via `app/`.
+- New feature order: Model → Service/Repository → Controller → widgets → Page → Binding → `AppNavigator` method.
+- SOLID: one reason to change per class; depend on abstractions (`IStorage`); keep Bindings thin (wiring only).
+- Widgets have no API/business logic. Controllers have no Flutter layout.
+- Do not invent folders outside this tree.

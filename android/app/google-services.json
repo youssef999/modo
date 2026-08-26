@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "344724751214",
+    "project_id": "daily-tasks-f9ba1",
+    "storage_bucket": "daily-tasks-f9ba1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344724751214:android:41e6eea93a37686775377f",
+        "android_client_info": {
+          "package_name": "com.life_goals_pro.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "344724751214-chglo77gp0eqcgsr0aqnq093kbkik82h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyConbEFDigSXGhbtZb2hfRL5KnPAmJOjtQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "344724751214-chglo77gp0eqcgsr0aqnq093kbkik82h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

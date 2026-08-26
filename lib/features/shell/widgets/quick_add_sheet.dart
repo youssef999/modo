@@ -1,0 +1,95 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:life_daily_app/app/app_navigator.dart';
+import 'package:life_daily_app/core/constants/locale_keys.dart';
+import 'package:life_daily_app/core/theme/app_colors.dart';
+import 'package:life_daily_app/core/theme/app_radius.dart';
+import 'package:life_daily_app/core/theme/app_spacing.dart';
+import 'package:life_daily_app/core/theme/app_text_styles.dart';
+import 'package:life_daily_app/features/finance/models/finance_entry.dart';
+import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
+import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
+
+class QuickAddSheet {
+  QuickAddSheet._();
+
+  static void show(BuildContext context) {
+    final colors = context.appPalette;
+    Get.bottomSheet(
+      Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: AppCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(LocaleKeys.quickAdd.tr, style: AppTextStyles.h5(colors)),
+              const SizedBox(height: AppSpacing.md),
+              _AddRow(
+                icon: Icons.flag_outlined,
+                label: LocaleKeys.goalsTitle.tr,
+                onTap: () {
+                  Get.back();
+                  Get.find<ShellController>().selectArea(ShellArea.goals);
+                },
+              ),
+              _AddRow(
+                icon: Icons.menu_book_outlined,
+                label: LocaleKeys.journalTitle.tr,
+                onTap: () {
+                  Get.back();
+                  Get.find<ShellController>().selectArea(ShellArea.journal);
+                },
+              ),
+              _AddRow(
+                icon: Icons.account_balance_wallet_outlined,
+                label: LocaleKeys.financeTitle.tr,
+                onTap: () {
+                  Get.back();
+                  AppNavigator.toFinanceEntry(kind: FinanceKind.expense);
+                },
+              ),
+              _AddRow(
+                icon: Icons.work_outline,
+                label: LocaleKeys.workTitle.tr,
+                onTap: () {
+                  Get.back();
+                  Get.find<ShellController>().selectArea(ShellArea.work);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      backgroundColor: colors.background.withValues(alpha: 0),
+      barrierColor: colors.textPrimary.withValues(alpha: 0.25),
+    );
+  }
+}
+
+class _AddRow extends StatelessWidget {
+  const _AddRow({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            Icon(icon, color: colors.primary),
+            const SizedBox(width: AppSpacing.md),
+            Text(label, style: AppTextStyles.body1(colors)),
+          ],
+        ),
+      ),
+    );
+  }
+}

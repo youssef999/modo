@@ -1,0 +1,28 @@
+---
+description: Design tokens — colors, spacing, type, localization
+alwaysApply: true
+---
+
+# Design system
+
+Never hard-code `Color(0x…)`, `Colors.*`, raw padding numbers, or user-facing strings.
+
+```dart
+// ✅
+final colors = context.appPalette;
+padding: const EdgeInsets.all(AppSpacing.md),
+style: AppTextStyles.body1(colors),
+Text(LocaleKeys.homeTitle.tr),
+Icon(Icons.home, size: AppIconSize.md, color: colors.primary),
+
+// ❌ Color(0xFF2D6A4F), EdgeInsets.all(13), Text('Hello'), CupertinoIcons
+```
+
+- Colors live only in `AppColors.light` / `AppColors.dark`.
+- Gradients: `AppGradients.primary` / `primaryHero` / `accent` from palette tokens.
+- Spacing: `AppSpacing`. Radius: `AppRadius` (lg 24, xl 32). Type: Cairo via `AppTextStyles`.
+- Main chrome: `AppFloatingNavBar` + `AppNavFab` (notched floating bar, primary blue FAB).
+- Home top: theme/locale as icon buttons only. Name prompt is one field, then a welcome banner.
+- New token → add to core theme first, then use it.
+- New copy → `LocaleKeys` + `en_us.dart` + `ar_sa.dart`.
+- Reuse `lib/shared/widgets` (`AppButton`, `AppCard`, `AppScaffold`). Do not rebuild them in a page.

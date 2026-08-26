@@ -1,0 +1,25 @@
+---
+description: GetX imperative state, bindings, un-named routing
+alwaysApply: true
+---
+
+# GetX
+
+State is **imperative only**:
+
+```dart
+// ✅
+class FooController extends GetxController {
+  int count = 0;
+  void inc() { count++; update(['foo']); }
+}
+GetBuilder<FooController>(id: 'foo', builder: (c) => Text('${c.count}'));
+
+// ❌ .obs, Obx, GetX<FooController>, Get.put in a widget
+```
+
+- Register with `Get.lazyPut` in a `Bindings` class. Guard with `Get.isRegistered`.
+- App-wide: `InitialBinding`. Feature: `<Feature>Binding`.
+- Navigate **without names**: `Get.to(() => const Page(), binding: FeatureBinding())` through `AppNavigator`. Never `Get.toNamed`, `getPages`, or route string constants.
+- Theme: `ThemeController` + `Get.changeThemeMode`. Locale: `LocaleController` + `Get.updateLocale`.
+- Persist via `IStorage`, not `GetStorage` calls in UI. Tests use `MemoryStorage`.

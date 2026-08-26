@@ -1,0 +1,20 @@
+---
+description: Life Daily product — silent auth and simple life hubs
+alwaysApply: true
+---
+
+# Product
+
+Life Daily is one simple place for **goals** (short/medium/long), **journal**, **money** (spend/earn/debt), and **work**. UX stays empty-state-first: few taps, no onboarding forms.
+
+## Auth (must preserve data)
+
+1. On first open: silent **anonymous** Firebase Auth. No email, name, or password.
+2. User can write immediately; all docs live under `users/{uid}/...`.
+3. CTA: "Save your data and open it anywhere" → Google (and Apple on iOS). Prefer `linkWithCredential` so the anonymous **uid stays**.
+4. If that Google/Apple account already owns a uid (second phone): `signInWithCredential` and load that uid's data.
+5. Never ask for a password. Never wipe data on link.
+
+## Data
+
+Owner-only Firestore. No PII (email) in `users/{uid}`. New features write through a repository, not widgets.

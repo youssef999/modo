@@ -1,0 +1,1 @@
+enum AppViewMode { list, grid }
