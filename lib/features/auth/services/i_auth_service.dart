@@ -8,4 +8,12 @@ abstract class IAuthService {
   Future<AppUser> continueWithGoogle();
 
   Future<AppUser> continueWithApple();
+
+  Future<AppUser> signInWithEmail(String email, String password);
+
+  Future<AppUser> registerWithEmail(String email, String password);
+
+  Future<void> sendPasswordReset(String email);
+
+  Future<void> signOut();
 }

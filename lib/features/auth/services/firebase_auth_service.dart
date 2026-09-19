@@ -48,6 +48,88 @@ class FirebaseAuthService implements IAuthService {
     return _linkOrSignIn(oauth);
   }
 
+  @override
+  Future<AppUser> signInWithEmail(String email, String password) async {
+    final cleanEmail = email.trim();
+    final current = _auth.currentUser;
+
+    if (current != null && current.isAnonymous) {
+      final credential = EmailAuthProvider.credential(
+        email: cleanEmail,
+        password: password,
+      );
+      try {
+        final linked = await current.linkWithCredential(credential);
+        return _map(_requireUser(linked.user));
+      } on FirebaseAuthException catch (error) {
+        if (!_shouldSwitchAccount(error.code)) {
+          throw AppFailure(error.message ?? error.code);
+        }
+      }
+    }
+
+    try {
+      final result = await _auth.signInWithEmailAndPassword(
+        email: cleanEmail,
+        password: password,
+      );
+      return _map(_requireUser(result.user));
+    } on FirebaseAuthException catch (error) {
+      throw AppFailure(error.message ?? error.code);
+    }
+  }
+
+  @override
+  Future<AppUser> registerWithEmail(String email, String password) async {
+    final cleanEmail = email.trim();
+    final current = _auth.currentUser;
+
+    if (current != null && current.isAnonymous) {
+      final credential = EmailAuthProvider.credential(
+        email: cleanEmail,
+        password: password,
+      );
+      try {
+        final linked = await current.linkWithCredential(credential);
+        return _map(_requireUser(linked.user));
+      } on FirebaseAuthException catch (error) {
+        if (!_shouldSwitchAccount(error.code)) {
+          throw AppFailure(error.message ?? error.code);
+        }
+      }
+    }
+
+    try {
+      final result = await _auth.createUserWithEmailAndPassword(
+        email: cleanEmail,
+        password: password,
+      );
+      return _map(_requireUser(result.user));
+    } on FirebaseAuthException catch (error) {
+      throw AppFailure(error.message ?? error.code);
+    }
+  }
+
+  @override
+  Future<void> sendPasswordReset(String email) async {
+    final cleanEmail = email.trim();
+    try {
+      await _auth.sendPasswordResetEmail(email: cleanEmail);
+    } on FirebaseAuthException catch (error) {
+      throw AppFailure(error.message ?? error.code);
+    }
+  }
+
+  @override
+  Future<void> signOut() async {
+    try {
+      await _auth.signOut();
+      await ensureAnonymousSession();
+    } on FirebaseAuthException catch (error) {
+      throw AppFailure(error.message ?? error.code);
+    }
+  }
+
   Future<AppUser> _linkOrSignIn(AuthCredential credential) async {
     final current = _auth.currentUser;
     if (current == null) {
@@ -139,6 +221,8 @@ class FirebaseAuthService implements IAuthService {
       isAnonymous: user.isAnonymous,
       hasGoogle: providers.contains('google.com'),
       hasApple: providers.contains('apple.com'),
+      hasPassword: providers.contains('password'),
+      email: user.email,
       displayName: user.displayName,
     );
   }

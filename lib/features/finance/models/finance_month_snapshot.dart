@@ -1,4 +1,5 @@
 import 'finance_category.dart';
+import 'finance_commitment.dart';
 import 'finance_entry.dart';
 import 'finance_month_plan.dart';
 
@@ -17,6 +18,9 @@ class FinanceMonthSnapshot {
     required this.outflowByCategory,
     required this.incomeByCategory,
     required this.dailySpend,
+    this.commitmentsTotal = 0.0,
+    this.unpaidCommitments = 0.0,
+    this.paidCommitments = 0.0,
   });
 
   factory FinanceMonthSnapshot.from({
@@ -24,6 +28,7 @@ class FinanceMonthSnapshot {
     required List<FinanceCategory> categories,
     required DateTime month,
     FinanceMonthPlan? plan,
+    List<FinanceCommitment> commitments = const [],
   }) {
     final start = DateTime(month.year, month.month);
     final end = DateTime(month.year, month.month + 1);
@@ -84,6 +89,18 @@ class FinanceMonthSnapshot {
       }
     }
 
+    var totalCommitments = 0.0;
+    var unpaid = 0.0;
+    var paid = 0.0;
+    for (final item in commitments) {
+      totalCommitments += item.amount;
+      if (item.isPaid) {
+        paid += item.amount;
+      } else {
+        unpaid += item.amount;
+      }
+    }
+
     return FinanceMonthSnapshot(
       income: loggedIncome,
       plannedIncome: plan?.expectedSalary ?? 0,
@@ -96,6 +113,9 @@ class FinanceMonthSnapshot {
       outflowByCategory: outflowMap,
       incomeByCategory: incomeMap,
       dailySpend: daily,
+      commitmentsTotal: totalCommitments,
+      unpaidCommitments: unpaid,
+      paidCommitments: paid,
     );
   }
 
@@ -110,12 +130,19 @@ class FinanceMonthSnapshot {
   final Map<String, double> outflowByCategory;
   final Map<String, double> incomeByCategory;
   final List<double> dailySpend;
+  final double commitmentsTotal;
+  final double unpaidCommitments;
+  final double paidCommitments;
 
   double get expenses => spend;
 
   double get remaining => free;
 
   double get free => income - spend;
+
+  double get safeLiquidity => free - unpaidCommitments;
+
+  double get safeRemaining => safeLiquidity;
 
   double get budgetLeft => spendBudget - spend;
 

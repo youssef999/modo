@@ -84,8 +84,6 @@ class _GlassBar extends StatelessWidget {
                       item: item,
                       selected:
                           !item.opensPlan &&
-                          !item.opensDatePicker &&
-                          !item.focusSearch &&
                           controller.sectionIndex == item.sectionIndex,
                     ),
                 ],
@@ -163,8 +161,6 @@ class _NavIcon extends StatelessWidget {
         onTap: () => Get.find<ShellController>().selectSection(
           item.sectionIndex,
           opensPlan: item.opensPlan,
-          opensDatePicker: item.opensDatePicker,
-          focusSearch: item.focusSearch,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

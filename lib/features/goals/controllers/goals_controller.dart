@@ -7,6 +7,8 @@ import 'package:life_daily_app/features/auth/services/i_auth_service.dart';
 
 import '../models/goal_category.dart';
 import '../models/goal_model.dart';
+import '../models/goal_task.dart';
+import '../models/goal_tracker.dart';
 import '../repositories/i_goal_repository.dart';
 
 class GoalsController extends GetxController {
@@ -224,5 +226,90 @@ class GoalsController extends GetxController {
     await editGoal(
       next.copyWith(status: complete ? GoalStatus.done : GoalStatus.active),
     );
+  }
+
+  GoalModel? goalById(String id) {
+    for (final goal in goals) {
+      if (goal.id == id) return goal;
+    }
+    return null;
+  }
+
+  Future<void> toggleTask(GoalModel goal, String taskId) async {
+    final updatedTasks = goal.tasks.map((task) {
+      if (task.id == taskId) {
+        return task.copyWith(isCompleted: !task.isCompleted);
+      }
+      return task;
+    }).toList();
+    final next = goal.copyWith(
+      tasks: updatedTasks,
+      updatedAt: DateTime.now(),
+    );
+    await editGoal(next);
+  }
+
+  Future<void> addTask(GoalModel goal, String title) async {
+    final cleanTitle = title.trim();
+    if (cleanTitle.isEmpty) return;
+    final newTask = GoalTask(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: cleanTitle,
+      order: goal.tasks.length,
+    );
+    final next = goal.copyWith(
+      tasks: [...goal.tasks, newTask],
+      updatedAt: DateTime.now(),
+    );
+    await editGoal(next);
+  }
+
+  Future<void> deleteTask(GoalModel goal, String taskId) async {
+    final updatedTasks = goal.tasks.where((t) => t.id != taskId).toList();
+    final next = goal.copyWith(
+      tasks: updatedTasks,
+      updatedAt: DateTime.now(),
+    );
+    await editGoal(next);
+  }
+
+  Future<void> updateTrackerValue(
+    GoalModel goal,
+    String trackerId,
+    double newValue, {
+    int? milestoneIndex,
+  }) async {
+    final updatedTrackers = goal.trackers.map((tracker) {
+      if (tracker.id == trackerId) {
+        return tracker.copyWith(
+          current: newValue,
+          currentMilestoneIndex: milestoneIndex ?? tracker.currentMilestoneIndex,
+        );
+      }
+      return tracker;
+    }).toList();
+    final next = goal.copyWith(
+      trackers: updatedTrackers,
+      updatedAt: DateTime.now(),
+    );
+    await editGoal(next);
+  }
+
+  Future<void> addTracker(GoalModel goal, GoalTracker tracker) async {
+    final next = goal.copyWith(
+      trackers: [...goal.trackers, tracker],
+      updatedAt: DateTime.now(),
+    );
+    await editGoal(next);
+  }
+
+  Future<void> deleteTracker(GoalModel goal, String trackerId) async {
+    final updatedTrackers =
+        goal.trackers.where((t) => t.id != trackerId).toList();
+    final next = goal.copyWith(
+      trackers: updatedTrackers,
+      updatedAt: DateTime.now(),
+    );
+    await editGoal(next);
   }
 }

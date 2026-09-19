@@ -9,9 +9,7 @@ import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
 import 'package:life_daily_app/features/finance/models/finance_month_snapshot.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
-import 'package:life_daily_app/features/journal/controllers/journal_controller.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
-import 'package:life_daily_app/features/work/controllers/work_controller.dart';
 import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
 
 class HomeAnalysisRow extends StatelessWidget {
@@ -29,88 +27,44 @@ class HomeAnalysisRow extends StatelessWidget {
         GetBuilder<GoalsController>(
           id: 'goals',
           builder: (goals) {
-            return GetBuilder<JournalController>(
-              id: 'journal',
-              builder: (journal) {
-                return GetBuilder<WorkController>(
-                  id: 'work',
-                  builder: (work) {
-                    return GetBuilder<FinanceController>(
-                      id: 'finance',
-                      builder: (finance) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _AnalysisTile(
-                                    icon: Icons.flag_rounded,
-                                    title: LocaleKeys.goalsTitle.tr,
-                                    value: LocaleKeys.analysisGoals.trParams({
-                                      'done': '${goals.doneCount}',
-                                      'total': '${goals.totalCount}',
-                                    }),
-                                    emphasized: true,
-                                    onTap: () => Get.find<ShellController>()
-                                        .selectArea(ShellArea.goals),
-                                  ),
+            return GetBuilder<FinanceController>(
+              id: 'finance',
+              builder: (finance) {
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _AnalysisTile(
+                        icon: Icons.flag_rounded,
+                        title: LocaleKeys.goalsTitle.tr,
+                        value: LocaleKeys.analysisGoals.trParams({
+                          'done': '${goals.doneCount}',
+                          'total': '${goals.totalCount}',
+                        }),
+                        emphasized: true,
+                        onTap: () => Get.find<ShellController>()
+                            .selectArea(ShellArea.goals),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: _AnalysisTile(
+                        icon: Icons.account_balance_wallet_rounded,
+                        title: LocaleKeys.financeTitle.tr,
+                        value: finance.hasActivity
+                            ? LocaleKeys.financeRemaining.trParams({
+                                'value': FinanceMonthSnapshot.format(
+                                  finance.snapshot.remaining,
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Expanded(
-                                  child: _AnalysisTile(
-                                    icon: Icons.auto_stories_rounded,
-                                    title: LocaleKeys.journalTitle.tr,
-                                    value: LocaleKeys.journalCount.trParams({
-                                      'count': '${journal.entries.length}',
-                                    }),
-                                    onTap: () => Get.find<ShellController>()
-                                        .selectArea(ShellArea.journal),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _AnalysisTile(
-                                    icon: Icons.account_balance_wallet_rounded,
-                                    title: LocaleKeys.financeTitle.tr,
-                                    value: finance.hasActivity
-                                        ? LocaleKeys.financeRemaining.trParams({
-                                            'value':
-                                                FinanceMonthSnapshot.format(
-                                                  finance.snapshot.remaining,
-                                                ),
-                                          })
-                                        : LocaleKeys.financeEmptyTitle.tr,
-                                    onTap: () {
-                                      Get.find<ShellController>().selectArea(
-                                        ShellArea.finance,
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Expanded(
-                                  child: _AnalysisTile(
-                                    icon: Icons.work_rounded,
-                                    title: LocaleKeys.workTitle.tr,
-                                    value: LocaleKeys.workOpenCount.trParams({
-                                      'count': '${work.openItems.length}',
-                                    }),
-                                    onTap: () => Get.find<ShellController>()
-                                        .selectArea(ShellArea.work),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
+                              })
+                            : LocaleKeys.financeEmptyTitle.tr,
+                        onTap: () {
+                          Get.find<ShellController>().selectArea(
+                            ShellArea.finance,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 );
               },
             );

@@ -20,26 +20,11 @@ class HomeAreas extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         HomeAreaTile(
-          icon: Icons.menu_book_outlined,
-          title: LocaleKeys.journalTitle.tr,
-          subtitle: LocaleKeys.journalSubtitle.tr,
-          onTap: () =>
-              Get.find<ShellController>().selectArea(ShellArea.journal),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        HomeAreaTile(
           icon: Icons.account_balance_wallet_outlined,
           title: LocaleKeys.financeTitle.tr,
           subtitle: LocaleKeys.financeSubtitle.tr,
           onTap: () =>
               Get.find<ShellController>().selectArea(ShellArea.finance),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        HomeAreaTile(
-          icon: Icons.work_outline,
-          title: LocaleKeys.workTitle.tr,
-          subtitle: LocaleKeys.workSubtitle.tr,
-          onTap: () => Get.find<ShellController>().selectArea(ShellArea.work),
         ),
       ],
     );

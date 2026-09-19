@@ -63,7 +63,7 @@ class GoalGridCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Expanded(
             child: GestureDetector(
-              onTap: () => AppNavigator.toGoalEditor(goal: goal),
+              onTap: () => AppNavigator.toGoalDetail(goal.id),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

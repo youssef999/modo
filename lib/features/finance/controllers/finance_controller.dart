@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
+import 'package:life_daily_app/core/constants/storage_keys.dart';
+import 'package:life_daily_app/core/storage/i_storage.dart';
 import 'package:life_daily_app/features/auth/services/i_auth_service.dart';
 
 import '../models/finance_category.dart';
 import '../models/finance_category_role.dart';
+import '../models/finance_commitment.dart';
 import '../models/finance_entry.dart';
 import '../models/finance_month_plan.dart';
 import '../models/finance_month_snapshot.dart';
@@ -15,13 +19,17 @@ enum FinancePageTab { charts, reports }
 enum FinanceChartKind { expense, income }
 
 class FinanceController extends GetxController {
-  FinanceController(this._repository);
+  FinanceController(this._repository, [IStorage? storage])
+      : _storage = storage ??
+            (Get.isRegistered<IStorage>() ? Get.find<IStorage>() : null);
 
   final IFinanceRepository _repository;
+  final IStorage? _storage;
 
   List<FinanceCategory> categories = [];
   List<FinanceEntry> entries = [];
   List<FinanceMonthPlan> monthPlans = [];
+  List<FinanceCommitment> commitments = [];
   String? selectedCategoryId;
   DateTime month = DateTime(DateTime.now().year, DateTime.now().month);
   FinancePageTab pageTab = FinancePageTab.charts;
@@ -36,6 +44,7 @@ class FinanceController extends GetxController {
       categories: categories,
       month: month,
       plan: planFor(month),
+      commitments: commitments,
     );
   }
 
@@ -154,8 +163,79 @@ class FinanceController extends GetxController {
     categories = await _repository.fetchCategories(ownerId);
     entries = await _repository.fetchEntries(ownerId);
     monthPlans = await _repository.fetchMonthPlans(ownerId);
+    _loadCommitments();
     await _ensureCarriedPlan();
     isLoading = false;
+    update(['finance']);
+  }
+
+  void _loadCommitments() {
+    final raw = _storage?.read<String>(StorageKeys.financeCommitments);
+    if (raw == null || raw.isEmpty) {
+      commitments = [];
+      return;
+    }
+    try {
+      final list = jsonDecode(raw);
+      if (list is List) {
+        commitments = list
+            .whereType<Map>()
+            .map((m) => FinanceCommitment.fromMap(
+                  m['id']?.toString() ?? '',
+                  Map<String, dynamic>.from(m),
+                ))
+            .toList();
+      }
+    } catch (_) {
+      commitments = [];
+    }
+  }
+
+  Future<void> _saveCommitments() async {
+    final jsonString = jsonEncode(commitments.map((c) => c.toMap()).toList());
+    await _storage?.write(StorageKeys.financeCommitments, jsonString);
+  }
+
+  Future<void> addCommitment({
+    required String title,
+    required double amount,
+    required int dueDay,
+    String categoryId = '',
+    String note = '',
+  }) async {
+    final now = DateTime.now();
+    final item = FinanceCommitment(
+      id: now.millisecondsSinceEpoch.toString(),
+      ownerId: ownerId,
+      title: title.trim(),
+      amount: amount,
+      dueDay: dueDay,
+      isPaid: false,
+      categoryId: categoryId,
+      note: note.trim(),
+      createdAt: now,
+      updatedAt: now,
+    );
+    commitments = [...commitments, item];
+    await _saveCommitments();
+    update(['finance']);
+  }
+
+  Future<void> toggleCommitmentPaid(FinanceCommitment item) async {
+    final updated = item.copyWith(
+      isPaid: !item.isPaid,
+      updatedAt: DateTime.now(),
+    );
+    commitments = commitments
+        .map((c) => c.id == item.id ? updated : c)
+        .toList();
+    await _saveCommitments();
+    update(['finance']);
+  }
+
+  Future<void> deleteCommitment(FinanceCommitment item) async {
+    commitments = commitments.where((c) => c.id != item.id).toList();
+    await _saveCommitments();
     update(['finance']);
   }
 

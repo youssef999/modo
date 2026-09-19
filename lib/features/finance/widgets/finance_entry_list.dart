@@ -5,6 +5,7 @@ import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
 import 'package:life_daily_app/features/finance/pages/finance_all_entries_page.dart';
+import 'package:life_daily_app/features/finance/widgets/finance_commitments_card.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_entry_tile.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_savings_nudge.dart';
 import 'package:life_daily_app/shared/widgets/feedback/app_empty_state.dart';
@@ -24,6 +25,8 @@ class FinanceEntryList extends StatelessWidget {
             children: [
               const FinanceSavingsNudge(),
               const SizedBox(height: AppSpacing.md),
+              const FinanceCommitmentsCard(),
+              const SizedBox(height: AppSpacing.md),
               AppEmptyState(
                 icon: Icons.receipt_long_outlined,
                 title: LocaleKeys.financeEmptyTitle.tr,
@@ -36,6 +39,8 @@ class FinanceEntryList extends StatelessWidget {
         return ListView(
           children: [
             const FinanceSavingsNudge(),
+            const SizedBox(height: AppSpacing.md),
+            const FinanceCommitmentsCard(),
             const SizedBox(height: AppSpacing.md),
             AppSectionHeader(
               title: LocaleKeys.financeRecent.tr,

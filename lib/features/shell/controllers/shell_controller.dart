@@ -4,12 +4,8 @@ import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
 import 'package:life_daily_app/features/finance/models/finance_entry.dart';
-import 'package:life_daily_app/features/journal/controllers/journal_controller.dart';
-import 'package:life_daily_app/features/journal/models/journal_folder.dart';
-import 'package:life_daily_app/features/work/controllers/work_controller.dart';
-import 'package:life_daily_app/features/work/models/work_folder.dart';
 
-enum ShellArea { goals, finance, journal, work }
+enum ShellArea { goals, finance }
 
 class ShellNavItem {
   const ShellNavItem({
@@ -17,16 +13,12 @@ class ShellNavItem {
     required this.labelKey,
     required this.sectionIndex,
     this.opensPlan = false,
-    this.opensDatePicker = false,
-    this.focusSearch = false,
   });
 
   final IconData icon;
   final String labelKey;
   final int sectionIndex;
   final bool opensPlan;
-  final bool opensDatePicker;
-  final bool focusSearch;
 }
 
 class ShellController extends GetxController {
@@ -43,8 +35,6 @@ class ShellController extends GetxController {
   void selectSection(
     int index, {
     bool opensPlan = false,
-    bool opensDatePicker = false,
-    bool focusSearch = false,
   }) {
     if (opensPlan) {
       AppNavigator.toMonthPlan();
@@ -53,12 +43,6 @@ class ShellController extends GetxController {
     sectionIndex = index;
     _syncFinanceTab();
     update(['shell']);
-    if (opensDatePicker && Get.isRegistered<JournalController>()) {
-      Get.find<JournalController>().requestDatePicker();
-    }
-    if (focusSearch && Get.isRegistered<JournalController>()) {
-      Get.find<JournalController>().requestSearchFocus();
-    }
   }
 
   void onFab() {
@@ -67,20 +51,6 @@ class ShellController extends GetxController {
         AppNavigator.toGoalEditor();
       case ShellArea.finance:
         AppNavigator.toFinanceEntry(kind: FinanceKind.expense);
-      case ShellArea.journal:
-        AppNavigator.toJournalEditor(
-          folderId: Get.isRegistered<JournalController>()
-              ? Get.find<JournalController>().selectedFolderId ??
-                    JournalFolder.generalId
-              : JournalFolder.generalId,
-        );
-      case ShellArea.work:
-        AppNavigator.toWorkEditor(
-          folderId: Get.isRegistered<WorkController>()
-              ? Get.find<WorkController>().selectedFolderId ??
-                    WorkFolder.generalId
-              : WorkFolder.generalId,
-        );
     }
   }
 
@@ -107,30 +77,6 @@ class ShellController extends GetxController {
         ShellNavItem(
           icon: Icons.pie_chart_outline_rounded,
           labelKey: LocaleKeys.financeCharts,
-          sectionIndex: 1,
-        ),
-      ],
-      ShellArea.journal => const [
-        ShellNavItem(
-          icon: Icons.home_outlined,
-          labelKey: LocaleKeys.navHome,
-          sectionIndex: 0,
-        ),
-        ShellNavItem(
-          icon: Icons.view_agenda_outlined,
-          labelKey: LocaleKeys.journalLog,
-          sectionIndex: 1,
-        ),
-      ],
-      ShellArea.work => const [
-        ShellNavItem(
-          icon: Icons.home_outlined,
-          labelKey: LocaleKeys.navHome,
-          sectionIndex: 0,
-        ),
-        ShellNavItem(
-          icon: Icons.work_outline,
-          labelKey: LocaleKeys.navTasks,
           sectionIndex: 1,
         ),
       ],
@@ -162,31 +108,6 @@ class ShellController extends GetxController {
           labelKey: LocaleKeys.financeMonthPlan,
           sectionIndex: 2,
           opensPlan: true,
-        ),
-      ],
-      ShellArea.journal => const [
-        ShellNavItem(
-          icon: Icons.folder_outlined,
-          labelKey: LocaleKeys.navFolders,
-          sectionIndex: 2,
-        ),
-        ShellNavItem(
-          icon: Icons.search_rounded,
-          labelKey: LocaleKeys.navSearch,
-          sectionIndex: 3,
-          focusSearch: true,
-        ),
-      ],
-      ShellArea.work => const [
-        ShellNavItem(
-          icon: Icons.folder_outlined,
-          labelKey: LocaleKeys.navFolders,
-          sectionIndex: 2,
-        ),
-        ShellNavItem(
-          icon: Icons.task_alt_outlined,
-          labelKey: LocaleKeys.navDone,
-          sectionIndex: 3,
         ),
       ],
     };

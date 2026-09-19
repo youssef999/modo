@@ -8,8 +8,6 @@ extension ShellAreaStyle on ShellArea {
     return switch (this) {
       ShellArea.goals => LocaleKeys.goalsTitle,
       ShellArea.finance => LocaleKeys.financeTitle,
-      ShellArea.journal => LocaleKeys.journalTitle,
-      ShellArea.work => LocaleKeys.workTitle,
     };
   }
 
@@ -17,8 +15,6 @@ extension ShellAreaStyle on ShellArea {
     return switch (this) {
       ShellArea.goals => LocaleKeys.goalsSubtitle,
       ShellArea.finance => LocaleKeys.financeSubtitle,
-      ShellArea.journal => LocaleKeys.journalSubtitle,
-      ShellArea.work => LocaleKeys.workSubtitle,
     };
   }
 
@@ -26,8 +22,6 @@ extension ShellAreaStyle on ShellArea {
     return switch (this) {
       ShellArea.goals => Icons.flag_rounded,
       ShellArea.finance => Icons.account_balance_wallet_rounded,
-      ShellArea.journal => Icons.menu_book_rounded,
-      ShellArea.work => Icons.work_rounded,
     };
   }
 
@@ -35,8 +29,6 @@ extension ShellAreaStyle on ShellArea {
     return switch (this) {
       ShellArea.goals => colors.primary,
       ShellArea.finance => colors.success,
-      ShellArea.journal => colors.secondary,
-      ShellArea.work => colors.info,
     };
   }
 }

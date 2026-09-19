@@ -194,4 +194,64 @@ class LocaleKeys {
   static const String confirmDeleteFinance = 'confirm_delete_finance';
   static const String confirmDeleteJournal = 'confirm_delete_journal';
   static const String confirmDeleteWork = 'confirm_delete_work';
+
+  // Auth Dialog & Status
+  static const String authTitle = 'auth_title';
+  static const String authSubtitle = 'auth_subtitle';
+  static const String signIn = 'sign_in';
+  static const String signUp = 'sign_up';
+  static const String email = 'email';
+  static const String password = 'password';
+  static const String forgotPassword = 'forgot_password';
+  static const String resetPassword = 'reset_password';
+  static const String sendResetLink = 'send_reset_link';
+  static const String resetLinkSent = 'reset_link_sent';
+  static const String noAccount = 'no_account';
+  static const String alreadyHaveAccount = 'already_have_account';
+  static const String signOut = 'sign_out';
+  static const String signedInAs = 'signed_in_as';
+  static const String cloudSync = 'cloud_sync';
+  static const String syncStatusSynced = 'sync_status_synced';
+  static const String syncStatusGuest = 'sync_status_guest';
+  static const String orDivider = 'or_divider';
+  static const String invalidEmail = 'invalid_email';
+  static const String passwordTooShort = 'password_too_short';
+
+  // Goals Action Plan & Trackers
+  static const String actionPlan = 'action_plan';
+  static const String actionPlanSubtitle = 'action_plan_subtitle';
+  static const String addTask = 'add_task';
+  static const String taskTitle = 'task_title';
+  static const String noTasksYet = 'no_tasks_yet';
+  static const String trackers = 'trackers';
+  static const String addTracker = 'add_tracker';
+  static const String trackerKindNumeric = 'tracker_kind_numeric';
+  static const String trackerKindMilestone = 'tracker_kind_milestone';
+  static const String trackerKindStreak = 'tracker_kind_streak';
+  static const String trackerCurrent = 'tracker_current';
+  static const String trackerTarget = 'tracker_target';
+  static const String trackerUnit = 'tracker_unit';
+  static const String trackerUpdate = 'tracker_update';
+  static const String goalOverallProgress = 'goal_overall_progress';
+  static const String goalTasksProgress = 'goal_tasks_progress';
+  static const String viewGoalDetail = 'view_goal_detail';
+  static const String goalDetailTitle = 'goal_detail_title';
+
+  // Finance Commitments
+  static const String financeCommitments = 'finance_commitments';
+  static const String financeCommitmentsSubtitle = 'finance_commitments_subtitle';
+  static const String financeAddCommitment = 'finance_add_commitment';
+  static const String financeCommitmentTitle = 'finance_commitment_title';
+  static const String financeDueDay = 'finance_due_day';
+  static const String financeSafeLiquidity = 'finance_safe_liquidity';
+  static const String financeSafeLiquidityHint = 'finance_safe_liquidity_hint';
+  static const String financePaidCommitments = 'finance_paid_commitments';
+  static const String financeUnpaidCommitments = 'finance_unpaid_commitments';
+  static const String financeMarkPaid = 'finance_mark_paid';
+  static const String financeMarkUnpaid = 'finance_mark_unpaid';
+
+  // Web Shell
+  static const String webNavGoals = 'web_nav_goals';
+  static const String webNavFinance = 'web_nav_finance';
+  static const String webNavSettings = 'web_nav_settings';
 }

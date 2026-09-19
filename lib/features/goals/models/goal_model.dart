@@ -1,3 +1,6 @@
+import 'goal_task.dart';
+import 'goal_tracker.dart';
+
 enum GoalStatus { active, done }
 
 enum GoalKind { once, habit }
@@ -16,6 +19,8 @@ class GoalModel {
     required this.checkIns,
     required this.createdAt,
     required this.updatedAt,
+    this.tasks = const [],
+    this.trackers = const [],
   });
 
   final String id;
@@ -30,6 +35,8 @@ class GoalModel {
   final List<String> checkIns;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<GoalTask> tasks;
+  final List<GoalTracker> trackers;
 
   bool get isDone => status == GoalStatus.done;
 
@@ -60,7 +67,57 @@ class GoalModel {
 
   int get progressPercent => (progress * 100).round();
 
-  bool get isFullyComplete => isHabit ? completedDays >= plannedDays : isDone;
+  int get completedTasksCount => tasks.where((t) => t.isCompleted).length;
+
+  double get taskCompletionRate {
+    if (tasks.isEmpty) return 0.0;
+    return (completedTasksCount / tasks.length).clamp(0, 1);
+  }
+
+  int get taskCompletionPercent => (taskCompletionRate * 100).round();
+
+  double get trackerProgress {
+    if (trackers.isEmpty) return 0.0;
+    final sum = trackers.fold<double>(0.0, (acc, t) => acc + t.progress);
+    return (sum / trackers.length).clamp(0, 1);
+  }
+
+  int get trackerProgressPercent => (trackerProgress * 100).round();
+
+  double get overallSuccessRate {
+    if (isHabit) {
+      final components = <double>[progress];
+      if (tasks.isNotEmpty) {
+        components.add(taskCompletionRate);
+      }
+      if (trackers.isNotEmpty) {
+        components.add(trackerProgress);
+      }
+      final sum = components.fold<double>(0.0, (acc, v) => acc + v);
+      return (sum / components.length).clamp(0, 1);
+    } else {
+      if (isDone) return 1.0;
+      final components = <double>[];
+      if (tasks.isNotEmpty) {
+        components.add(taskCompletionRate);
+      }
+      if (trackers.isNotEmpty) {
+        components.add(trackerProgress);
+      }
+      if (components.isEmpty) return 0.0;
+      final sum = components.fold<double>(0.0, (acc, v) => acc + v);
+      return (sum / components.length).clamp(0, 1);
+    }
+  }
+
+  int get overallSuccessPercent => (overallSuccessRate * 100).round();
+
+  bool get isFullyComplete {
+    if (isHabit) {
+      return completedDays >= plannedDays;
+    }
+    return isDone;
+  }
 
   bool containsDay(DateTime day) {
     final value = dateOnly(day);
@@ -106,6 +163,8 @@ class GoalModel {
     GoalStatus? status,
     List<String>? checkIns,
     DateTime? updatedAt,
+    List<GoalTask>? tasks,
+    List<GoalTracker>? trackers,
   }) {
     return GoalModel(
       id: id,
@@ -120,6 +179,8 @@ class GoalModel {
       checkIns: checkIns ?? this.checkIns,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      tasks: tasks ?? this.tasks,
+      trackers: trackers ?? this.trackers,
     );
   }
 
@@ -144,6 +205,8 @@ class GoalModel {
       'checkIns': checkIns,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'tasks': tasks.map((t) => t.toMap()).toList(),
+      'trackers': trackers.map((t) => t.toMap()).toList(),
     };
   }
 
@@ -152,6 +215,31 @@ class GoalModel {
         DateTime.tryParse(data['dueAt'] as String? ?? '') ?? DateTime.now();
     final createdAt =
         DateTime.tryParse(data['createdAt'] as String? ?? '') ?? DateTime.now();
+
+    final rawTasks = data['tasks'];
+    final tasksList = <GoalTask>[];
+    if (rawTasks is List) {
+      for (final item in rawTasks) {
+        if (item is Map<String, dynamic>) {
+          tasksList.add(GoalTask.fromMap(item));
+        } else if (item is Map) {
+          tasksList.add(GoalTask.fromMap(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+
+    final rawTrackers = data['trackers'];
+    final trackersList = <GoalTracker>[];
+    if (rawTrackers is List) {
+      for (final item in rawTrackers) {
+        if (item is Map<String, dynamic>) {
+          trackersList.add(GoalTracker.fromMap(item));
+        } else if (item is Map) {
+          trackersList.add(GoalTracker.fromMap(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+
     return GoalModel(
       id: id,
       ownerId: data['ownerId'] as String? ?? '',
@@ -171,6 +259,8 @@ class GoalModel {
       createdAt: createdAt,
       updatedAt:
           DateTime.tryParse(data['updatedAt'] as String? ?? '') ?? createdAt,
+      tasks: tasksList,
+      trackers: trackersList,
     );
   }
 

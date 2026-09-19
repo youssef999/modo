@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
     this.style,
     this.textAlign = TextAlign.start,
     this.focusNode,
+    this.obscureText = false,
   });
 
   final TextEditingController controller;
@@ -31,12 +32,14 @@ class AppTextField extends StatelessWidget {
   final TextStyle? style;
   final TextAlign textAlign;
   final FocusNode? focusNode;
+  final bool obscureText;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appPalette;
     return TextField(
       controller: controller,
+      obscureText: obscureText,
       maxLines: maxLines,
       autofocus: autofocus,
       textInputAction: textInputAction,

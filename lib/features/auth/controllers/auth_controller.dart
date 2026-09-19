@@ -3,8 +3,6 @@ import 'package:life_daily_app/core/ads/interstitial_ad_service.dart';
 import 'package:life_daily_app/core/errors/app_failure.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
-import 'package:life_daily_app/features/journal/controllers/journal_controller.dart';
-import 'package:life_daily_app/features/work/controllers/work_controller.dart';
 
 import '../models/app_user.dart';
 import '../services/i_auth_service.dart';
@@ -20,6 +18,7 @@ class AuthController extends GetxController {
   bool isBusy = false;
   bool isBootstrapping = true;
   String? errorMessage;
+  String? infoMessage;
 
   bool get isBackedUp => user?.isBackedUp ?? false;
 
@@ -41,20 +40,80 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> continueWithGoogle() => _link(
+  Future<bool> continueWithGoogle() => _executeAuth(
         _auth.continueWithGoogle,
         showAd: true,
       );
 
-  Future<void> continueWithApple() => _link(_auth.continueWithApple);
+  Future<bool> continueWithApple() => _executeAuth(_auth.continueWithApple);
 
-  Future<void> _link(
-    Future<AppUser> Function() action, {
-    bool showAd = false,
-  }) async {
+  Future<bool> signInWithEmail(String email, String password) {
+    return _executeAuth(
+      () => _auth.signInWithEmail(email, password),
+      showAd: true,
+    );
+  }
+
+  Future<bool> registerWithEmail(String email, String password) {
+    return _executeAuth(
+      () => _auth.registerWithEmail(email, password),
+      showAd: true,
+    );
+  }
+
+  Future<bool> sendPasswordReset(String email) async {
+    if (isBusy) return false;
+    isBusy = true;
+    errorMessage = null;
+    infoMessage = null;
+    update(['auth']);
+    try {
+      await _auth.sendPasswordReset(email);
+      infoMessage = 'Password reset instructions sent.';
+      return true;
+    } catch (error) {
+      errorMessage = _message(error);
+      return false;
+    } finally {
+      isBusy = false;
+      update(['auth']);
+    }
+  }
+
+  Future<void> signOut() async {
     if (isBusy) return;
     isBusy = true;
     errorMessage = null;
+    infoMessage = null;
+    update(['auth']);
+    try {
+      await _auth.signOut();
+      user = _auth.currentUser;
+      if (user != null) {
+        await _profiles.ensureProfile(user!);
+      }
+      if (Get.isRegistered<GoalsController>()) {
+        await Get.find<GoalsController>().load();
+      }
+      if (Get.isRegistered<FinanceController>()) {
+        await Get.find<FinanceController>().load();
+      }
+    } catch (error) {
+      errorMessage = _message(error);
+    } finally {
+      isBusy = false;
+      update(['auth']);
+    }
+  }
+
+  Future<bool> _executeAuth(
+    Future<AppUser> Function() action, {
+    bool showAd = false,
+  }) async {
+    if (isBusy) return false;
+    isBusy = true;
+    errorMessage = null;
+    infoMessage = null;
     update(['auth']);
     try {
       user = await action();
@@ -65,17 +124,13 @@ class AuthController extends GetxController {
       if (Get.isRegistered<FinanceController>()) {
         await Get.find<FinanceController>().onAccountReady();
       }
-      if (Get.isRegistered<JournalController>()) {
-        await Get.find<JournalController>().onAccountReady();
-      }
-      if (Get.isRegistered<WorkController>()) {
-        await Get.find<WorkController>().onAccountReady();
-      }
       if (showAd && Get.isRegistered<InterstitialAdService>()) {
         await Get.find<InterstitialAdService>().showIfReady();
       }
+      return true;
     } catch (error) {
       errorMessage = _message(error);
+      return false;
     } finally {
       isBusy = false;
       update(['auth']);

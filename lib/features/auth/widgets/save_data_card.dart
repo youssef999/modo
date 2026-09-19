@@ -7,6 +7,7 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
+import 'package:life_daily_app/features/auth/widgets/auth_dialog.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
 
@@ -27,19 +28,30 @@ class SaveDataCard extends StatelessWidget {
       builder: (controller) {
         if (controller.isBackedUp) {
           return AppCard(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  Icons.cloud_done_outlined,
-                  size: AppIconSize.lg,
-                  color: colors.success,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_done_outlined,
+                      size: AppIconSize.lg,
+                      color: colors.success,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        LocaleKeys.dataSaved.tr,
+                        style: AppTextStyles.body1(colors),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    LocaleKeys.dataSaved.tr,
-                    style: AppTextStyles.body1(colors),
-                  ),
+                const SizedBox(height: AppSpacing.sm),
+                AppButton(
+                  label: LocaleKeys.authTitle.tr,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () => AuthDialog.show(context),
                 ),
               ],
             ),
@@ -76,6 +88,12 @@ class SaveDataCard extends StatelessWidget {
                       : controller.continueWithApple,
                 ),
               ],
+              const SizedBox(height: AppSpacing.sm),
+              AppButton(
+                label: LocaleKeys.signIn.tr,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => AuthDialog.show(context),
+              ),
               if (controller.errorMessage != null) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Text(

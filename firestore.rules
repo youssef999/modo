@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
-    // Assumed Data Model
+    // Assumed Data Model for Life Daily
     // ===============================================================
     //
     // Collection: users
@@ -11,7 +11,7 @@ service cloud.firestore {
     //   - createdAt: timestamp (required, immutable)
     //   - updatedAt: timestamp (required)
     //   - isAnonymous: bool (required)
-    //   - linkedProviders: list<string> (required, max 4, each <= 32)
+    //   - linkedProviders: list<string> (required, max 4, each in [anonymous, google.com, apple.com, password])
     //   - schemaVersion: number (required, immutable, must be 1)
     //   - displayName: string (required, 0-40)
     //
@@ -22,18 +22,11 @@ service cloud.firestore {
     //   - kind: string in ['once','habit']
     //   - startsAt: timestamp (required)
     //   - dueAt: timestamp (required)
-    //   - category: string in [course, work, healthy_routine, nutrition, family, healthy_sleep]
+    //   - category: string
     //   - status: string in ['active','done']
     //   - checkIns: list<string> (required, max 366)
-    //   - createdAt: timestamp (required, immutable)
-    //   - updatedAt: timestamp (required)
-    //
-    // Subcollection: users/{userId}/journal/{entryId}
-    //   - ownerId: string (required, immutable, == userId)
-    //   - title: string (1-120)
-    //   - body: string (0-8000)
-    //   - day: string (10 chars, YYYY-MM-DD)
-    //   - folderId: string (1-64)
+    //   - tasks: list (optional)
+    //   - trackers: list (optional)
     //   - createdAt: timestamp (required, immutable)
     //   - updatedAt: timestamp (required)
     //
@@ -65,12 +58,14 @@ service cloud.firestore {
     //   - createdAt: timestamp (required, immutable)
     //   - updatedAt: timestamp (required)
     //
-    // Subcollection: users/{userId}/work_items/{itemId}
+    // Subcollection: users/{userId}/finance_commitments/{commitmentId}
     //   - ownerId: string (required, immutable, == userId)
     //   - title: string (1-120)
-    //   - details: string (0-8000)
-    //   - folderId: string (1-64)
-    //   - status: string in ['open','done']
+    //   - amount: number (0 to 1000000000)
+    //   - dueDay: number (1 to 31)
+    //   - isPaid: bool
+    //   - categoryId: string (0-64)
+    //   - note: string (0-500)
     //   - createdAt: timestamp (required, immutable)
     //   - updatedAt: timestamp (required)
     //
@@ -88,10 +83,10 @@ service cloud.firestore {
     function isValidProviderList(value) {
       return value is list
         && value.size() <= 4
-        && (value.size() == 0 || value[0] in ['anonymous', 'google.com', 'apple.com'])
-        && (value.size() < 2 || value[1] in ['anonymous', 'google.com', 'apple.com'])
-        && (value.size() < 3 || value[2] in ['anonymous', 'google.com', 'apple.com'])
-        && (value.size() < 4 || value[3] in ['anonymous', 'google.com', 'apple.com']);
+        && (value.size() == 0 || value[0] in ['anonymous', 'google.com', 'apple.com', 'password'])
+        && (value.size() < 2 || value[1] in ['anonymous', 'google.com', 'apple.com', 'password'])
+        && (value.size() < 3 || value[2] in ['anonymous', 'google.com', 'apple.com', 'password'])
+        && (value.size() < 4 || value[3] in ['anonymous', 'google.com', 'apple.com', 'password']);
     }
 
     function isValidUser(data) {
@@ -114,7 +109,7 @@ service cloud.firestore {
     }
 
     function isValidGoal(data, userId) {
-      return data.keys().hasOnly([
+      return (data.keys().hasOnly([
           'ownerId',
           'title',
           'details',
@@ -126,7 +121,21 @@ service cloud.firestore {
           'checkIns',
           'createdAt',
           'updatedAt'
-        ])
+        ]) || data.keys().hasOnly([
+          'ownerId',
+          'title',
+          'details',
+          'kind',
+          'startsAt',
+          'dueAt',
+          'category',
+          'status',
+          'checkIns',
+          'createdAt',
+          'updatedAt',
+          'tasks',
+          'trackers'
+        ]))
         && data.ownerId is string
         && data.ownerId == userId
         && data.ownerId == request.auth.uid
@@ -144,6 +153,8 @@ service cloud.firestore {
         && data.status in ['active', 'done']
         && data.checkIns is list
         && data.checkIns.size() <= 366
+        && (!('tasks' in data) || data.tasks is list)
+        && (!('trackers' in data) || data.trackers is list)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -167,33 +178,6 @@ service cloud.firestore {
         && data.iconKey is string
         && data.iconKey.size() >= 1
         && data.iconKey.size() <= 40
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
-    }
-
-    function isValidJournal(data, userId) {
-      return data.keys().hasOnly([
-          'ownerId',
-          'title',
-          'body',
-          'day',
-          'folderId',
-          'createdAt',
-          'updatedAt'
-        ])
-        && data.ownerId is string
-        && data.ownerId == userId
-        && data.ownerId == request.auth.uid
-        && data.title is string
-        && data.title.size() >= 1
-        && data.title.size() <= 120
-        && data.body is string
-        && data.body.size() <= 8000
-        && data.day is string
-        && data.day.size() == 10
-        && data.folderId is string
-        && data.folderId.size() >= 1
-        && data.folderId.size() <= 64
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -278,13 +262,15 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
-    function isValidWork(data, userId) {
+    function isValidFinanceCommitment(data, userId) {
       return data.keys().hasOnly([
           'ownerId',
           'title',
-          'details',
-          'folderId',
-          'status',
+          'amount',
+          'dueDay',
+          'isPaid',
+          'categoryId',
+          'note',
           'createdAt',
           'updatedAt'
         ])
@@ -294,31 +280,17 @@ service cloud.firestore {
         && data.title is string
         && data.title.size() >= 1
         && data.title.size() <= 120
-        && data.details is string
-        && data.details.size() <= 8000
-        && data.folderId is string
-        && data.folderId.size() >= 1
-        && data.folderId.size() <= 64
-        && data.status in ['open', 'done']
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
-    }
-
-    function isValidItemFolder(data, userId) {
-      return data.keys().hasOnly([
-          'ownerId',
-          'name',
-          'builtInKey',
-          'createdAt',
-          'updatedAt'
-        ])
-        && data.ownerId is string
-        && data.ownerId == userId
-        && data.ownerId == request.auth.uid
-        && data.name is string
-        && data.name.size() <= 40
-        && data.builtInKey is string
-        && data.builtInKey.size() <= 40
+        && data.amount is number
+        && data.amount >= 0
+        && data.amount <= 1000000000
+        && data.dueDay is number
+        && data.dueDay >= 1
+        && data.dueDay <= 31
+        && data.isPaid is bool
+        && data.categoryId is string
+        && data.categoryId.size() <= 64
+        && data.note is string
+        && data.note.size() <= 500
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -351,18 +323,6 @@ service cloud.firestore {
           && isValidGoalCategory(request.resource.data, userId);
         allow update: if isOwner(userId)
           && isValidGoalCategory(request.resource.data, userId)
-          && request.resource.data.ownerId == resource.data.ownerId
-          && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if isOwner(userId);
-      }
-
-      match /journal/{entryId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId)
-          && exists(/databases/$(database)/documents/users/$(userId))
-          && isValidJournal(request.resource.data, userId);
-        allow update: if isOwner(userId)
-          && isValidJournal(request.resource.data, userId)
           && request.resource.data.ownerId == resource.data.ownerId
           && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isOwner(userId);
@@ -404,42 +364,16 @@ service cloud.firestore {
         allow delete: if isOwner(userId);
       }
 
-      match /work_items/{itemId} {
+      match /finance_commitments/{commitmentId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId)
           && exists(/databases/$(database)/documents/users/$(userId))
-          && isValidWork(request.resource.data, userId);
+          && isValidFinanceCommitment(request.resource.data, userId);
         allow update: if isOwner(userId)
-          && isValidWork(request.resource.data, userId)
+          && isValidFinanceCommitment(request.resource.data, userId)
           && request.resource.data.ownerId == resource.data.ownerId
           && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isOwner(userId);
-      }
-
-      match /work_folders/{folderId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId)
-          && exists(/databases/$(database)/documents/users/$(userId))
-          && isValidItemFolder(request.resource.data, userId);
-        allow update: if isOwner(userId)
-          && isValidItemFolder(request.resource.data, userId)
-          && request.resource.data.ownerId == resource.data.ownerId
-          && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if isOwner(userId)
-          && resource.data.builtInKey != 'general';
-      }
-
-      match /journal_folders/{folderId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId)
-          && exists(/databases/$(database)/documents/users/$(userId))
-          && isValidItemFolder(request.resource.data, userId);
-        allow update: if isOwner(userId)
-          && isValidItemFolder(request.resource.data, userId)
-          && request.resource.data.ownerId == resource.data.ownerId
-          && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if isOwner(userId)
-          && resource.data.builtInKey != 'general';
       }
     }
   }

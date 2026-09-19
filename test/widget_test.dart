@@ -6,6 +6,7 @@ import 'package:life_daily_app/app/life_daily_app.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/storage/i_storage.dart';
 import 'package:life_daily_app/core/storage/memory_storage.dart';
+import 'package:life_daily_app/features/auth/controllers/profile_controller.dart';
 import 'package:life_daily_app/features/auth/services/fake_auth_service.dart';
 import 'package:life_daily_app/features/auth/services/fake_user_profile_service.dart';
 import 'package:life_daily_app/features/auth/services/i_auth_service.dart';
@@ -26,7 +27,6 @@ void main() {
     await tester.pumpWidget(const LifeDailyApp());
     await tester.pumpAndSettle();
     expect(find.text(LocaleKeys.askNameTitle.tr), findsOneWidget);
-    expect(find.text(LocaleKeys.analysisTitle.tr), findsOneWidget);
     expect(find.text(LocaleKeys.goalsTitle.tr), findsWidgets);
 
     await tester.enterText(find.byType(TextField), 'Sara');
@@ -34,9 +34,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(LocaleKeys.askNameTitle.tr), findsNothing);
-    expect(
-      find.text(LocaleKeys.helloName.trParams({'name': 'Sara'})),
-      findsOneWidget,
-    );
+    expect(Get.find<ProfileController>().displayName, 'Sara');
   });
 }

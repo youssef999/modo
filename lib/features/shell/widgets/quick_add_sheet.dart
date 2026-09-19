@@ -31,14 +31,7 @@ class QuickAddSheet {
                 onTap: () {
                   Get.back();
                   Get.find<ShellController>().selectArea(ShellArea.goals);
-                },
-              ),
-              _AddRow(
-                icon: Icons.menu_book_outlined,
-                label: LocaleKeys.journalTitle.tr,
-                onTap: () {
-                  Get.back();
-                  Get.find<ShellController>().selectArea(ShellArea.journal);
+                  AppNavigator.toGoalEditor();
                 },
               ),
               _AddRow(
@@ -47,14 +40,6 @@ class QuickAddSheet {
                 onTap: () {
                   Get.back();
                   AppNavigator.toFinanceEntry(kind: FinanceKind.expense);
-                },
-              ),
-              _AddRow(
-                icon: Icons.work_outline,
-                label: LocaleKeys.workTitle.tr,
-                onTap: () {
-                  Get.back();
-                  Get.find<ShellController>().selectArea(ShellArea.work);
                 },
               ),
             ],

@@ -11,22 +11,14 @@ import 'package:life_daily_app/features/finance/pages/finance_month_plan_page.da
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/pages/goal_category_page.dart';
+import 'package:life_daily_app/features/goals/pages/goal_detail_page.dart';
 import 'package:life_daily_app/features/goals/pages/goal_editor_page.dart';
 import 'package:life_daily_app/features/goals/pages/goals_all_page.dart';
 import 'package:life_daily_app/features/goals/pages/goals_page.dart';
 import 'package:life_daily_app/features/goals/bindings/goals_binding.dart';
 import 'package:life_daily_app/features/home/bindings/home_binding.dart';
-import 'package:life_daily_app/features/journal/bindings/journal_binding.dart';
-import 'package:life_daily_app/features/journal/models/journal_entry.dart';
-import 'package:life_daily_app/features/journal/pages/journal_all_log_page.dart';
-import 'package:life_daily_app/features/journal/pages/journal_editor_page.dart';
-import 'package:life_daily_app/features/journal/pages/journal_page.dart';
 import 'package:life_daily_app/features/shell/bindings/shell_binding.dart';
 import 'package:life_daily_app/features/shell/pages/shell_page.dart';
-import 'package:life_daily_app/features/work/bindings/work_binding.dart';
-import 'package:life_daily_app/features/work/models/work_item.dart';
-import 'package:life_daily_app/features/work/pages/work_editor_page.dart';
-import 'package:life_daily_app/features/work/pages/work_page.dart';
 
 class AppNavigator {
   AppNavigator._();
@@ -36,11 +28,7 @@ class AppNavigator {
   }
 
   static Future<T?> toGoals<T>() {
-    return Get.to<T>(() => const GoalsPage()) ?? Future<T?>.value();
-  }
-
-  static Future<T?> toJournal<T>() {
-    return Get.to<T>(() => const JournalPage(), binding: JournalBinding()) ??
+    return Get.to<T>(() => const GoalsPage(), binding: GoalsBinding()) ??
         Future<T?>.value();
   }
 
@@ -52,6 +40,14 @@ class AppNavigator {
   static Future<T?> toGoalEditor<T>({GoalModel? goal}) {
     return Get.to<T>(
           () => GoalEditorPage(goal: goal),
+          binding: GoalsBinding(),
+        ) ??
+        Future<T?>.value();
+  }
+
+  static Future<T?> toGoalDetail<T>(String goalId) {
+    return Get.to<T>(
+          () => GoalDetailPage(goalId: goalId),
           binding: GoalsBinding(),
         ) ??
         Future<T?>.value();
@@ -77,14 +73,6 @@ class AppNavigator {
     return Get.to<T>(
           () => GoalsAllPage(doneOnly: doneOnly),
           binding: GoalsBinding(),
-        ) ??
-        Future<T?>.value();
-  }
-
-  static Future<T?> toJournalAllLog<T>() {
-    return Get.to<T>(
-          () => const JournalAllLogPage(),
-          binding: JournalBinding(),
         ) ??
         Future<T?>.value();
   }
@@ -115,47 +103,6 @@ class AppNavigator {
         Future<T?>.value();
   }
 
-  static Future<T?> toJournalEditor<T>({
-    JournalEntry? entry,
-    String? draftTitle,
-    String? draftDetails,
-    String? folderId,
-  }) {
-    return Get.to<T>(
-          () => JournalEditorPage(
-            entry: entry,
-            draftTitle: draftTitle,
-            draftDetails: draftDetails,
-            folderId: folderId,
-          ),
-          binding: JournalBinding(),
-        ) ??
-        Future<T?>.value();
-  }
-
-  static Future<T?> toWorkEditor<T>({
-    WorkItem? item,
-    String? draftTitle,
-    String? draftDetails,
-    String? folderId,
-  }) {
-    return Get.to<T>(
-          () => WorkEditorPage(
-            item: item,
-            draftTitle: draftTitle,
-            draftDetails: draftDetails,
-            folderId: folderId,
-          ),
-          binding: WorkBinding(),
-        ) ??
-        Future<T?>.value();
-  }
-
-  static Future<T?> toWork<T>() {
-    return Get.to<T>(() => const WorkPage(), binding: WorkBinding()) ??
-        Future<T?>.value();
-  }
-
   static void back<T>([T? result]) {
     Get.back<T>(result: result);
   }
@@ -169,8 +116,6 @@ class AppStartBinding extends Bindings {
     HomeBinding().dependencies();
     GoalsBinding().dependencies();
     FinanceBinding().dependencies();
-    JournalBinding().dependencies();
-    WorkBinding().dependencies();
     ShellBinding().dependencies();
   }
 }

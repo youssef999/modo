@@ -11,6 +11,7 @@ class StorageKeys {
   static const String financeCategories = 'finance_categories';
   static const String financeEntries = 'finance_entries';
   static const String financeMonthPlans = 'finance_month_plans';
+  static const String financeCommitments = 'finance_commitments';
   static const String journalCache = 'journal_cache';
   static const String workCache = 'work_cache';
   static const String workFolders = 'work_folders';

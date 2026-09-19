@@ -9,6 +9,7 @@ import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_check_in_strip.dart';
+import 'package:life_daily_app/features/goals/widgets/goal_success_indicator.dart';
 import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
 import 'package:life_daily_app/shared/widgets/feedback/app_confirm_dialog.dart';
@@ -52,22 +53,31 @@ class GoalCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      goal.title,
-                      style: AppTextStyles.h6(colors).copyWith(
-                        decoration: goal.isFullyComplete
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
+                child: InkWell(
+                  onTap: () => AppNavigator.toGoalDetail(goal.id),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        goal.title,
+                        style: AppTextStyles.h6(colors).copyWith(
+                          decoration: goal.isFullyComplete
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                        ),
                       ),
-                    ),
-                    Text(
-                      controller.goalCategoryLabel(goal),
-                      style: AppTextStyles.caption(colors),
-                    ),
-                  ],
+                      Row(
+                        children: [
+                          Text(
+                            controller.goalCategoryLabel(goal),
+                            style: AppTextStyles.caption(colors),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          GoalSuccessIndicator(goal: goal, compact: true),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               IconButton(
