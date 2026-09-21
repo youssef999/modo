@@ -4,6 +4,7 @@ import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
+import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
@@ -99,11 +100,12 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
               Expanded(
                 child: GridView.builder(
                   itemCount: categories.length + 1,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 100,
                     mainAxisSpacing: AppSpacing.sm,
                     crossAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: 0.78,
+                    childAspectRatio: 0.85,
                   ),
                   itemBuilder: (context, index) {
                     if (index == categories.length) {
@@ -129,12 +131,46 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
                   },
                 ),
               ),
-              GestureDetector(
-                onTap: _noteFocus.unfocus,
-                child: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Text(_buffer, style: AppTextStyles.h1(colors)),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: _pickDate,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            size: 16,
+                            color: colors.primary,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            MaterialLocalizations.of(context)
+                                .formatMediumDate(_date),
+                            style: AppTextStyles.caption(colors).copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _noteFocus.unfocus,
+                    child: Text(_buffer, style: AppTextStyles.h1(colors)),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.sm),
               AppTextField(

@@ -31,6 +31,7 @@ class AuthDialog extends StatefulWidget {
 
 class _AuthDialogState extends State<AuthDialog> {
   AuthMode _mode = AuthMode.signIn;
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _localError;
@@ -43,6 +44,7 @@ class _AuthDialogState extends State<AuthDialog> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -227,6 +229,15 @@ class _AuthDialogState extends State<AuthDialog> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
+        if (_mode == AuthMode.signUp) ...[
+          AppTextField(
+            controller: _nameController,
+            label: LocaleKeys.fullName.tr,
+            keyboardType: TextInputType.name,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         AppTextField(
           controller: _emailController,
           label: LocaleKeys.email.tr,
@@ -346,6 +357,12 @@ class _AuthDialogState extends State<AuthDialog> {
   Future<void> _submit(AuthController auth) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final name = _nameController.text.trim();
+
+    if (_mode == AuthMode.signUp && name.isEmpty) {
+      setState(() => _localError = LocaleKeys.nameRequired.tr);
+      return;
+    }
 
     if (email.isEmpty || !email.contains('@')) {
       setState(() => _localError = LocaleKeys.invalidEmail.tr);
@@ -363,7 +380,7 @@ class _AuthDialogState extends State<AuthDialog> {
     if (_mode == AuthMode.signIn) {
       ok = await auth.signInWithEmail(email, password);
     } else if (_mode == AuthMode.signUp) {
-      ok = await auth.registerWithEmail(email, password);
+      ok = await auth.registerWithEmail(email, password, displayName: name);
     } else {
       ok = await auth.sendPasswordReset(email);
     }

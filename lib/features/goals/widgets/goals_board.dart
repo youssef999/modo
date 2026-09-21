@@ -42,7 +42,11 @@ class GoalsBoard extends StatelessWidget {
     return GetBuilder<GoalsController>(
       id: 'goals',
       builder: (controller) {
-        final allItems = doneOnly ? controller.doneGoals : controller.activeGoals;
+        final allItems = doneOnly
+            ? controller.doneGoals
+            : (controller.statusFilter != null
+                ? controller.filteredGoals
+                : controller.scopedGoals);
         final items = previewLimit == null
             ? allItems
             : allItems.take(previewLimit!).toList();

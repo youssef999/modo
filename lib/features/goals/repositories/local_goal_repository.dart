@@ -99,7 +99,7 @@ class LocalGoalRepository implements IGoalRepository {
       startsAt: GoalModel.dateOnly(startsAt),
       dueAt: GoalModel.dateOnly(dueAt),
       category: category,
-      status: GoalStatus.active,
+      status: GoalStatus.notStarted,
       checkIns: const [],
       createdAt: now,
       updatedAt: now,

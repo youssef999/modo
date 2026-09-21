@@ -19,12 +19,9 @@ class CachedGoalRepository implements IGoalRepository {
 
   @override
   Future<List<GoalCategory>> fetchCategories(String ownerId) async {
-    var items = await local.fetchCategories(ownerId);
     if (_useCloud) {
       try {
-        items = GoalCategory.withMissingBuiltIns(ownerId, items);
-        await remote!.saveAllCategories(items);
-        items = await remote!.fetchCategories(ownerId);
+        var items = await remote!.fetchCategories(ownerId);
         if (items.isEmpty) {
           items = GoalCategory.builtIns(ownerId);
           await remote!.saveAllCategories(items);
@@ -33,10 +30,10 @@ class CachedGoalRepository implements IGoalRepository {
           await remote!.saveAllCategories(items);
         }
         await local.replaceCategories(items);
+        return items;
       } catch (_) {}
-      return items;
     }
-    return items;
+    return local.fetchCategories(ownerId);
   }
 
   @override
@@ -62,14 +59,17 @@ class CachedGoalRepository implements IGoalRepository {
 
   @override
   Future<List<GoalModel>> fetch(String ownerId) async {
-    final localGoals = await local.fetch(ownerId);
     if (_useCloud) {
-      return _fetchFromCloud(ownerId, localGoals);
+      try {
+        final remoteGoals = await remote!.fetch(ownerId);
+        await local.replaceAll(remoteGoals);
+        return remoteGoals;
+      } catch (_) {
+        // Fallback to local cache if offline
+        return local.fetch(ownerId);
+      }
     }
-    if (localGoals.isEmpty) {
-      return _hydrateFromAnonymousCloud(ownerId);
-    }
-    return localGoals;
+    return local.fetch(ownerId);
   }
 
   @override
@@ -109,42 +109,17 @@ class CachedGoalRepository implements IGoalRepository {
 
   @override
   Future<void> syncAfterLogin(String ownerId) async {
-    final categories = await local.fetchCategories(ownerId);
-    final localGoals = await local.fetch(ownerId);
     if (!_useCloud) return;
-    await _tryCloud(() => remote!.saveAllCategories(categories));
-    await _tryCloud(() => remote!.saveAll(localGoals));
     try {
-      await local.replaceCategories(await remote!.fetchCategories(ownerId));
-      await local.replaceAll(await remote!.fetch(ownerId));
-    } catch (_) {}
-  }
-
-  Future<List<GoalModel>> _fetchFromCloud(
-    String ownerId,
-    List<GoalModel> localGoals,
-  ) async {
-    try {
-      await remote!.saveAll(localGoals);
+      final remoteCategories = await remote!.fetchCategories(ownerId);
+      if (remoteCategories.isNotEmpty) {
+        await local.replaceCategories(remoteCategories);
+      }
       final remoteGoals = await remote!.fetch(ownerId);
-      await local.replaceAll(remoteGoals);
-      return remoteGoals;
-    } catch (_) {
-      return localGoals;
-    }
-  }
-
-  Future<List<GoalModel>> _hydrateFromAnonymousCloud(String ownerId) async {
-    final cloud = remote;
-    if (cloud == null || ownerId.isEmpty) return const [];
-    try {
-      final remoteGoals = await cloud.fetch(ownerId);
-      if (remoteGoals.isEmpty) return const [];
-      await local.replaceAll(remoteGoals);
-      return remoteGoals;
-    } catch (_) {
-      return const [];
-    }
+      if (remoteGoals.isNotEmpty) {
+        await local.replaceAll(remoteGoals);
+      }
+    } catch (_) {}
   }
 
   Future<void> _tryCloud(Future<void> Function() action) async {

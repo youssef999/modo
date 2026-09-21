@@ -8,6 +8,8 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
+import 'package:life_daily_app/features/goals/widgets/app_priority_picker.dart';
+import 'package:life_daily_app/features/goals/widgets/app_status_picker.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_check_in_strip.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_success_indicator.dart';
 import 'package:life_daily_app/app/app_navigator.dart';
@@ -66,13 +68,26 @@ class GoalCard extends StatelessWidget {
                               : TextDecoration.none,
                         ),
                       ),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
                         children: [
                           Text(
                             controller.goalCategoryLabel(goal),
                             style: AppTextStyles.caption(colors),
                           ),
-                          const SizedBox(width: AppSpacing.sm),
+                          GoalPriorityBadge(
+                            priority: goal.priority,
+                            onChanged: (newPriority) =>
+                                controller.changeGoalPriority(goal, newPriority),
+                            compact: true,
+                          ),
+                          GoalStatusBadge(
+                            status: goal.status,
+                            onChanged: (newStatus) => controller.changeGoalStatus(goal, newStatus),
+                            compact: true,
+                          ),
                           GoalSuccessIndicator(goal: goal, compact: true),
                         ],
                       ),

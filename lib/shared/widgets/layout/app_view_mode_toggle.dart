@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:life_daily_app/core/models/app_view_mode.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
@@ -7,18 +8,24 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 class AppViewModeToggle extends StatelessWidget {
   const AppViewModeToggle({
     super.key,
-    required this.isGrid,
-    required this.onList,
-    required this.onGrid,
+    this.mode,
+    this.onModeChanged,
+    this.isGrid = false,
+    this.onList,
+    this.onGrid,
   });
 
+  final AppViewMode? mode;
+  final ValueChanged<AppViewMode>? onModeChanged;
   final bool isGrid;
-  final VoidCallback onList;
-  final VoidCallback onGrid;
+  final VoidCallback? onList;
+  final VoidCallback? onGrid;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appPalette;
+    final currentMode = mode ?? (isGrid ? AppViewMode.grid : AppViewMode.list);
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -30,13 +37,34 @@ class AppViewModeToggle extends StatelessWidget {
         children: [
           _ModeButton(
             icon: Icons.view_list_rounded,
-            selected: !isGrid,
-            onTap: onList,
+            selected: currentMode == AppViewMode.list,
+            onTap: () {
+              if (onModeChanged != null) {
+                onModeChanged!(AppViewMode.list);
+              } else if (onList != null) {
+                onList!();
+              }
+            },
           ),
           _ModeButton(
             icon: Icons.grid_view_rounded,
-            selected: isGrid,
-            onTap: onGrid,
+            selected: currentMode == AppViewMode.grid,
+            onTap: () {
+              if (onModeChanged != null) {
+                onModeChanged!(AppViewMode.grid);
+              } else if (onGrid != null) {
+                onGrid!();
+              }
+            },
+          ),
+          _ModeButton(
+            icon: Icons.view_kanban_rounded,
+            selected: currentMode == AppViewMode.kanban,
+            onTap: () {
+              if (onModeChanged != null) {
+                onModeChanged!(AppViewMode.kanban);
+              }
+            },
           ),
         ],
       ),

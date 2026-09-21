@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/bindings/initial_binding.dart';
 import 'package:life_daily_app/features/auth/bindings/auth_binding.dart';
+import 'package:life_daily_app/features/auth/pages/login_page.dart';
 import 'package:life_daily_app/features/finance/bindings/finance_binding.dart';
 import 'package:life_daily_app/features/finance/models/finance_category_role.dart';
 import 'package:life_daily_app/features/finance/models/finance_entry.dart';
@@ -25,6 +26,10 @@ class AppNavigator {
 
   static void offAllHome() {
     Get.offAll(() => const ShellPage(), binding: ShellBinding());
+  }
+
+  static void offAllLogin() {
+    Get.offAll(() => const LoginPage(), binding: AuthBinding());
   }
 
   static Future<T?> toGoals<T>() {

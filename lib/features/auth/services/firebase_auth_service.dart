@@ -25,6 +25,10 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
+  Stream<AppUser?> get authStateChanges =>
+      _auth.authStateChanges().map((user) => user == null ? null : _map(user));
+
+  @override
   Future<AppUser> ensureAnonymousSession() async {
     final existing = _auth.currentUser;
     if (existing != null) return _map(existing);
@@ -80,7 +84,11 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
-  Future<AppUser> registerWithEmail(String email, String password) async {
+  Future<AppUser> registerWithEmail(
+    String email,
+    String password, {
+    String? displayName,
+  }) async {
     final cleanEmail = email.trim();
     final current = _auth.currentUser;
 
@@ -91,7 +99,11 @@ class FirebaseAuthService implements IAuthService {
       );
       try {
         final linked = await current.linkWithCredential(credential);
-        return _map(_requireUser(linked.user));
+        final user = _requireUser(linked.user);
+        if (displayName != null && displayName.trim().isNotEmpty) {
+          await user.updateDisplayName(displayName.trim());
+        }
+        return _map(user);
       } on FirebaseAuthException catch (error) {
         if (!_shouldSwitchAccount(error.code)) {
           throw AppFailure(error.message ?? error.code);
@@ -104,7 +116,11 @@ class FirebaseAuthService implements IAuthService {
         email: cleanEmail,
         password: password,
       );
-      return _map(_requireUser(result.user));
+      final user = _requireUser(result.user);
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        await user.updateDisplayName(displayName.trim());
+      }
+      return _map(user);
     } on FirebaseAuthException catch (error) {
       throw AppFailure(error.message ?? error.code);
     }
@@ -124,7 +140,6 @@ class FirebaseAuthService implements IAuthService {
   Future<void> signOut() async {
     try {
       await _auth.signOut();
-      await ensureAnonymousSession();
     } on FirebaseAuthException catch (error) {
       throw AppFailure(error.message ?? error.code);
     }

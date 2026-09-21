@@ -34,4 +34,18 @@ class FirestorePaths {
 
   static String userJournalFolders(String uid) =>
       '$users/$uid/$journalFolders';
+
+  // Team Collaboration
+  static const String goalInvites = 'goal_invites';
+  static const String goalMembers = 'members';
+
+  static String goalInvitesCol() => goalInvites;
+
+  static String goalDoc(String goalId) => '$goals/$goalId';
+
+  static String goalMembersCol(String goalId) =>
+      '$goals/$goalId/$goalMembers';
+
+  static String goalMemberDoc(String goalId, String uid) =>
+      '$goals/$goalId/$goalMembers/$uid';
 }

@@ -9,6 +9,8 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
+import 'package:life_daily_app/features/goals/widgets/app_priority_picker.dart';
+import 'package:life_daily_app/features/goals/widgets/app_status_picker.dart';
 import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
 import 'package:life_daily_app/shared/widgets/feedback/app_confirm_dialog.dart';
 
@@ -81,11 +83,30 @@ class GoalGridCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    controller.goalCategoryLabel(goal),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption(colors),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          controller.goalCategoryLabel(goal),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption(colors),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      GoalPriorityBadge(
+                        priority: goal.priority,
+                        onChanged: (newPriority) =>
+                            controller.changeGoalPriority(goal, newPriority),
+                        compact: true,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      GoalStatusBadge(
+                        status: goal.status,
+                        onChanged: (newStatus) => controller.changeGoalStatus(goal, newStatus),
+                        compact: true,
+                      ),
+                    ],
                   ),
                   if (goal.details.trim().isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.xs),

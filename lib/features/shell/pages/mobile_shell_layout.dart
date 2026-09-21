@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
 import 'package:life_daily_app/features/goals/pages/goals_page.dart';
+import 'package:life_daily_app/features/goals/widgets/goal_invite_banner.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
 import 'package:life_daily_app/features/shell/widgets/app_shell_drawer.dart';
 import 'package:life_daily_app/features/shell/widgets/app_shell_top_bar.dart';
@@ -25,6 +26,7 @@ class MobileShellLayout extends StatelessWidget {
         child: Column(
           children: [
             const AppShellTopBar(),
+            const GoalInviteBanner(),
             Expanded(
               child: GetBuilder<ShellController>(
                 id: 'shell',

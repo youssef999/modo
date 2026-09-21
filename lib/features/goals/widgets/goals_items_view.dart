@@ -6,6 +6,7 @@ import 'package:life_daily_app/features/goals/controllers/goals_controller.dart'
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_card.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_grid_card.dart';
+import 'package:life_daily_app/features/goals/widgets/goals_kanban_board.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_view_mode_toggle.dart';
 
 class GoalsItemsView extends StatelessWidget {
@@ -25,9 +26,14 @@ class GoalsItemsView extends StatelessWidget {
     return GetBuilder<GoalsController>(
       id: 'goals',
       builder: (controller) {
-        final content = controller.isGridView
-            ? _GridItems(items: items, shrinkWrap: shrinkWrap)
-            : _ListItems(items: items, shrinkWrap: shrinkWrap);
+        final Widget content;
+        if (controller.viewMode == AppViewMode.kanban) {
+          content = const GoalsKanbanBoard();
+        } else if (controller.isGridView) {
+          content = _GridItems(items: items, shrinkWrap: shrinkWrap);
+        } else {
+          content = _ListItems(items: items, shrinkWrap: shrinkWrap);
+        }
 
         if (shrinkWrap) {
           return Column(
@@ -37,9 +43,8 @@ class GoalsItemsView extends StatelessWidget {
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
                   child: AppViewModeToggle(
-                    isGrid: controller.isGridView,
-                    onList: () => controller.setViewMode(AppViewMode.list),
-                    onGrid: () => controller.setViewMode(AppViewMode.grid),
+                    mode: controller.viewMode,
+                    onModeChanged: controller.setViewMode,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -56,9 +61,8 @@ class GoalsItemsView extends StatelessWidget {
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: AppViewModeToggle(
-                  isGrid: controller.isGridView,
-                  onList: () => controller.setViewMode(AppViewMode.list),
-                  onGrid: () => controller.setViewMode(AppViewMode.grid),
+                  mode: controller.viewMode,
+                  onModeChanged: controller.setViewMode,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -111,11 +115,12 @@ class _GridItems extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: shrinkWrap,
       physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate:
+          const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 340,
         mainAxisSpacing: AppSpacing.md,
         crossAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.92,
+        childAspectRatio: 0.95,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) => GoalGridCard(goal: items[index]),

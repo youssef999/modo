@@ -36,7 +36,11 @@ class FinanceController extends GetxController {
   FinanceChartKind chartKind = FinanceChartKind.expense;
   bool isLoading = true;
 
-  String get ownerId => Get.find<IAuthService>().currentUser?.uid ?? '';
+  String get ownerId {
+    final uid = Get.find<IAuthService>().currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) return uid;
+    return 'local_user';
+  }
 
   FinanceMonthSnapshot get snapshot {
     return FinanceMonthSnapshot.from(

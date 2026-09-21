@@ -27,9 +27,13 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _start() async {
     final controller = Get.find<AuthController>();
-    final ok = await controller.bootstrap();
+    // Returns true only if a real (non-anonymous) user is already signed in
+    final hasUser = await controller.bootstrap();
+
     if (!mounted) return;
-    if (ok) {
+
+    if (hasUser) {
+      // User is logged in — load data and go to home
       await Get.find<ProfileController>().syncFromRemote();
       await Get.find<GoalsController>().load();
       if (Get.isRegistered<FinanceController>()) {
@@ -37,6 +41,10 @@ class _SplashPageState extends State<SplashPage> {
       }
       if (!mounted) return;
       AppNavigator.offAllHome();
+    } else {
+      // No user — mandatory login
+      if (!mounted) return;
+      AppNavigator.offAllLogin();
     }
   }
 
@@ -53,39 +61,36 @@ class _SplashPageState extends State<SplashPage> {
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: controller.errorMessage == null
                   ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: AppSpacing.xl,
-                          height: AppSpacing.xl,
-                          child: CircularProgressIndicator(
-                            color: colors.primary,
-                            strokeWidth: 2,
-                          ),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: AppSpacing.xl,
+                        height: AppSpacing.xl,
+                        child: CircularProgressIndicator(
+                          color: colors.primary,
+                          strokeWidth: 2,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          LocaleKeys.preparingSpace.tr,
-                          style: AppTextStyles.body2(colors),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    )
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        LocaleKeys.preparingSpace.tr,
+                        style: AppTextStyles.body2(colors),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  )
                   : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          controller.errorMessage!,
-                          style: AppTextStyles.body2(colors),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AppButton(
-                          label: LocaleKeys.retry.tr,
-                          onPressed: _start,
-                        ),
-                      ],
-                    ),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        controller.errorMessage!,
+                        style: AppTextStyles.body2(colors),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppButton(label: LocaleKeys.retry.tr, onPressed: _start),
+                    ],
+                  ),
             ),
           ),
         );

@@ -20,7 +20,11 @@ class GoalsAllPage extends StatelessWidget {
       body: GetBuilder<GoalsController>(
         id: 'goals',
         builder: (controller) {
-          final items = doneOnly ? controller.doneGoals : controller.activeGoals;
+          final items = doneOnly
+              ? controller.doneGoals
+              : (controller.statusFilter != null
+                  ? controller.filteredGoals
+                  : controller.activeGoals);
           if (items.isEmpty) {
             return AppEmptyState(
               icon: Icons.flag_outlined,

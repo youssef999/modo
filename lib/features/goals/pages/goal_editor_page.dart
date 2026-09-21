@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
+import 'package:life_daily_app/core/models/app_priority.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_gradients.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
@@ -10,6 +11,8 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
+import 'package:life_daily_app/features/goals/widgets/app_priority_picker.dart';
+import 'package:life_daily_app/features/goals/widgets/app_status_picker.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_scaffold.dart';
@@ -31,6 +34,8 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
   late DateTime _dueAt;
   late String _categoryId;
   late bool _pickingCategory;
+  late GoalStatus _status;
+  late AppPriority _priority;
 
   @override
   void initState() {
@@ -45,6 +50,8 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
     _dueAt = goal?.dueAt ?? today;
     _categoryId = goal?.category ?? controller.selectedCategoryId ?? '';
     _pickingCategory = widget.goal == null;
+    _status = goal?.status ?? GoalStatus.notStarted;
+    _priority = goal?.priority ?? AppPriority.medium;
   }
 
   @override
@@ -73,13 +80,26 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
         return AppScaffold(
           title: isEdit ? LocaleKeys.editGoal.tr : LocaleKeys.addGoal.tr,
           bottomBar: AppButton(label: LocaleKeys.save.tr, onPressed: _save),
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 _SelectedCategory(
                   categoryId: _categoryId,
                   onChange: () => setState(() => _pickingCategory = true),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _StatusTile(
+                  status: _status,
+                  onChanged: (s) => setState(() => _status = s),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _PriorityTile(
+                  priority: _priority,
+                  onChanged: (p) => setState(() => _priority = p),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppTextField(
@@ -117,9 +137,11 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
               ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
+  },
+);
   }
 
   void _setKind(GoalKind kind) {
@@ -173,6 +195,8 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
         startsAt: _kind == GoalKind.habit ? _startsAt : _dueAt,
         dueAt: _dueAt,
         category: _categoryId,
+        status: _status,
+        priority: _priority,
       );
     } else {
       final checkIns = _kind == GoalKind.habit
@@ -186,6 +210,8 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
           startsAt: _kind == GoalKind.habit ? _startsAt : _dueAt,
           dueAt: _dueAt,
           category: _categoryId,
+          status: _status,
+          priority: _priority,
           checkIns: checkIns,
           updatedAt: DateTime.now(),
         ),
@@ -212,20 +238,24 @@ class _CategoryStep extends StatelessWidget {
     return AppScaffold(
       title: LocaleKeys.goalCategory.tr,
       onBack: onBack,
-      body: GetBuilder<GoalsController>(
-        id: 'goals',
-        builder: (controller) {
-          return Column(
-            children: [
-              Expanded(
-                child: GridView.builder(
-                  itemCount: controller.categories.length + 1,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: AppSpacing.sm,
-                    crossAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: 0.78,
-                  ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: GetBuilder<GoalsController>(
+            id: 'goals',
+            builder: (controller) {
+              return Column(
+                children: [
+                  Expanded(
+                    child: GridView.builder(
+                      itemCount: controller.categories.length + 1,
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 120,
+                        mainAxisSpacing: AppSpacing.md,
+                        crossAxisSpacing: AppSpacing.md,
+                        childAspectRatio: 0.82,
+                      ),
                   itemBuilder: (context, index) {
                     if (index == controller.categories.length) {
                       return GestureDetector(
@@ -302,11 +332,13 @@ class _CategoryStep extends StatelessWidget {
                 ),
               ),
             ],
-          );
-        },
+            );
+          },
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _SelectedCategory extends StatelessWidget {
@@ -468,3 +500,98 @@ class _DateTile extends StatelessWidget {
     );
   }
 }
+
+class _StatusTile extends StatelessWidget {
+  const _StatusTile({required this.status, required this.onChanged});
+
+  final GoalStatus status;
+  final ValueChanged<GoalStatus> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(LocaleKeys.selectStatus.tr, style: AppTextStyles.caption(colors)),
+        const SizedBox(height: AppSpacing.xs),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            children: [
+              GoalStatusBadge(
+                status: status,
+                onChanged: onChanged,
+              ),
+              const Spacer(),
+              Text(
+                LocaleKeys.changeStatus.tr,
+                style: AppTextStyles.caption(colors).copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PriorityTile extends StatelessWidget {
+  const _PriorityTile({required this.priority, required this.onChanged});
+
+  final AppPriority priority;
+  final ValueChanged<AppPriority> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(LocaleKeys.selectPriority.tr, style: AppTextStyles.caption(colors)),
+        const SizedBox(height: AppSpacing.xs),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            children: [
+              GoalPriorityBadge(
+                priority: priority,
+                onChanged: onChanged,
+              ),
+              const Spacer(),
+              Text(
+                LocaleKeys.changePriority.tr,
+                style: AppTextStyles.caption(colors).copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+

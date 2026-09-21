@@ -320,52 +320,72 @@ class _AddCommitmentDialogState extends State<_AddCommitmentDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                LocaleKeys.financeAddCommitment.tr,
-                style: AppTextStyles.h6(colors),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: LocaleKeys.financeCommitmentTitle.tr,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  LocaleKeys.financeAddCommitment.tr,
+                  style: AppTextStyles.h6(colors),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: LocaleKeys.financeCommitmentTitle.tr,
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: LocaleKeys.financeAmount.tr,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: _amountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: LocaleKeys.financeAmount.tr,
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _dueDayController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: LocaleKeys.financeDueDay.tr,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                const SizedBox(height: AppSpacing.sm),
+                InkWell(
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final currentDay = (int.tryParse(_dueDayController.text) ?? 1).clamp(1, 28);
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(now.year, now.month, currentDay),
+                      firstDate: DateTime(now.year - 1),
+                      lastDate: DateTime(now.year + 5),
+                    );
+                    if (picked != null) {
+                      setState(() => _dueDayController.text = '${picked.day}');
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: IgnorePointer(
+                    child: TextField(
+                      controller: _dueDayController,
+                      decoration: InputDecoration(
+                        labelText: LocaleKeys.financeDueDay.tr,
+                        prefixIcon: const Icon(Icons.calendar_today_rounded),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: _noteController,
@@ -386,8 +406,9 @@ class _AddCommitmentDialogState extends State<_AddCommitmentDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _save() {
     final title = _titleController.text.trim();

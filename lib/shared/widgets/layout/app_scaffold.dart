@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:life_daily_app/core/constants/breakpoints.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_palette.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
@@ -35,29 +36,47 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appPalette;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
+
     final paddedBody = Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
+        isDesktop ? AppSpacing.xl : AppSpacing.md,
         AppSpacing.sm,
-        AppSpacing.md,
-        embed ? AppSpacing.navClearance : AppSpacing.md,
+        isDesktop ? AppSpacing.xl : AppSpacing.md,
+        (embed && !isDesktop) ? AppSpacing.navClearance : AppSpacing.md,
       ),
       child: body,
     );
 
-    final header = embed && showHeader && title != null
-        ? Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              0,
+    final constrainedBody = isDesktop
+        ? Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1040),
+              child: paddedBody,
             ),
-            child: Row(
-              children: [
-                Expanded(child: Text(title!, style: AppTextStyles.h5(colors))),
-                ...?actions,
-              ],
+          )
+        : paddedBody;
+
+    final header = embed && showHeader && title != null
+        ? Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  0,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(title!, style: AppTextStyles.h5(colors))),
+                    ...?actions,
+                  ],
+                ),
+              ),
             ),
           )
         : const SizedBox.shrink();
@@ -71,7 +90,7 @@ class AppScaffold extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               header,
-              Expanded(child: paddedBody),
+              Expanded(child: constrainedBody),
             ],
           ),
         ),
@@ -88,7 +107,7 @@ class AppScaffold extends StatelessWidget {
               onBack: onBack,
             )
           : null,
-      body: paddedBody,
+      body: constrainedBody,
       bottomNavigationBar: _BottomChrome(
         colors: colors,
         bottomBar: bottomBar,
@@ -112,6 +131,16 @@ class _BottomChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (bottomBar == null && !showBanner) return const SizedBox.shrink();
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
+    final constrainedBottomBar = isDesktop && bottomBar != null
+        ? Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: bottomBar,
+            ),
+          )
+        : bottomBar;
+
     return Material(
       color: colors.background,
       child: Column(
@@ -128,7 +157,7 @@ class _BottomChrome extends StatelessWidget {
                   AppSpacing.md,
                   AppSpacing.sm,
                 ),
-                child: bottomBar,
+                child: constrainedBottomBar,
               ),
             ),
           if (showBanner) const AppBannerAd(),

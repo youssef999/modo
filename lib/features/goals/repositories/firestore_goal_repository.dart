@@ -7,12 +7,16 @@ import 'i_goal_repository.dart';
 
 class FirestoreGoalRepository implements IGoalRepository {
   FirestoreGoalRepository({FirebaseFirestore? firestore})
-    : _db = firestore ?? FirebaseFirestore.instance;
+      : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
   CollectionReference<Map<String, dynamic>> _col(String ownerId) {
     return _db.collection(FirestorePaths.userGoals(ownerId));
+  }
+
+  CollectionReference<Map<String, dynamic>> get _topGoalsCol {
+    return _db.collection(FirestorePaths.goals);
   }
 
   CollectionReference<Map<String, dynamic>> _categories(String ownerId) {
@@ -53,8 +57,35 @@ class FirestoreGoalRepository implements IGoalRepository {
 
   @override
   Future<List<GoalModel>> fetch(String ownerId) async {
-    final snapshot = await _col(ownerId).get();
-    final goals = snapshot.docs.map(_fromDoc).toList();
+    final Map<String, GoalModel> goalMap = {};
+
+    try {
+      // 1. Fetch goals where ownerId is in memberIds (collaborator/partner or owner)
+      final memberSnapshot = await _topGoalsCol
+          .where('memberIds', arrayContains: ownerId)
+          .get();
+      for (final doc in memberSnapshot.docs) {
+        goalMap[doc.id] = _fromDoc(doc);
+      }
+
+      // 2. Fetch goals directly owned by user in top-level goals
+      final ownerSnapshot = await _topGoalsCol
+          .where('ownerId', isEqualTo: ownerId)
+          .get();
+      for (final doc in ownerSnapshot.docs) {
+        goalMap[doc.id] = _fromDoc(doc);
+      }
+    } catch (_) {}
+
+    // 3. Fallback/compatibility: check user's subcollection
+    try {
+      final userSnapshot = await _col(ownerId).get();
+      for (final doc in userSnapshot.docs) {
+        goalMap.putIfAbsent(doc.id, () => _fromDoc(doc));
+      }
+    } catch (_) {}
+
+    final goals = goalMap.values.toList();
     goals.sort((a, b) => a.dueAt.compareTo(b.dueAt));
     return goals;
   }
@@ -70,7 +101,7 @@ class FirestoreGoalRepository implements IGoalRepository {
     required String category,
   }) async {
     final now = DateTime.now();
-    final ref = _col(ownerId).doc();
+    final ref = _topGoalsCol.doc();
     final goal = GoalModel(
       id: ref.id,
       ownerId: ownerId,
@@ -80,12 +111,14 @@ class FirestoreGoalRepository implements IGoalRepository {
       startsAt: GoalModel.dateOnly(startsAt),
       dueAt: GoalModel.dateOnly(dueAt),
       category: category,
-      status: GoalStatus.active,
+      status: GoalStatus.notStarted,
       checkIns: const [],
       createdAt: now,
       updatedAt: now,
+      memberIds: [ownerId],
+      members: const [],
     );
-    await ref.set(_toFirestore(goal));
+    await save(goal);
     return goal;
   }
 
@@ -94,8 +127,12 @@ class FirestoreGoalRepository implements IGoalRepository {
     return save(goal);
   }
 
-  Future<void> save(GoalModel goal) {
-    return _col(goal.ownerId).doc(goal.id).set(_toFirestore(goal));
+  Future<void> save(GoalModel goal) async {
+    final data = _toFirestore(goal);
+    await Future.wait([
+      _topGoalsCol.doc(goal.id).set(data),
+      _col(goal.ownerId).doc(goal.id).set(data),
+    ]);
   }
 
   Future<void> saveCategory(GoalCategory category) {
@@ -125,29 +162,27 @@ class FirestoreGoalRepository implements IGoalRepository {
 
   Future<void> saveAll(List<GoalModel> goals) async {
     if (goals.isEmpty) return;
-    var batch = _db.batch();
-    var count = 0;
     for (final goal in goals) {
-      batch.set(_col(goal.ownerId).doc(goal.id), _toFirestore(goal));
-      count++;
-      if (count == 450) {
-        await batch.commit();
-        batch = _db.batch();
-        count = 0;
-      }
+      await save(goal);
     }
-    if (count > 0) await batch.commit();
   }
 
   @override
-  Future<void> delete(String ownerId, String id) {
-    return _col(ownerId).doc(id).delete();
+  Future<void> delete(String ownerId, String id) async {
+    await Future.wait([
+      _topGoalsCol.doc(id).delete(),
+      _col(ownerId).doc(id).delete(),
+    ]);
   }
 
   @override
   Future<void> syncAfterLogin(String ownerId) async {}
 
   Map<String, dynamic> _toFirestore(GoalModel goal) {
+    final memberIds = goal.memberIds.isNotEmpty
+        ? goal.memberIds
+        : [goal.ownerId];
+
     return {
       'ownerId': goal.ownerId,
       'title': goal.title,
@@ -157,7 +192,13 @@ class FirestoreGoalRepository implements IGoalRepository {
       'dueAt': Timestamp.fromDate(goal.dueAt),
       'category': goal.category,
       'status': goal.status.name,
+      'priority': goal.priority.name,
       'checkIns': goal.checkIns,
+      'boardOrder': goal.boardOrder,
+      'tasks': goal.tasks.map((t) => t.toMap()).toList(),
+      'trackers': goal.trackers.map((t) => t.toMap()).toList(),
+      'memberIds': memberIds,
+      'members': goal.members.map((m) => m.toMap()).toList(),
       'createdAt': Timestamp.fromDate(goal.createdAt),
       'updatedAt': Timestamp.fromDate(goal.updatedAt),
     };
@@ -165,25 +206,7 @@ class FirestoreGoalRepository implements IGoalRepository {
 
   GoalModel _fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
-    final createdAt = _date(data['createdAt']);
-    return GoalModel(
-      id: doc.id,
-      ownerId: data['ownerId'] as String? ?? '',
-      title: data['title'] as String? ?? '',
-      details: data['details'] as String? ?? '',
-      kind: (data['kind'] as String?) == GoalKind.habit.name
-          ? GoalKind.habit
-          : GoalKind.once,
-      startsAt: data['startsAt'] == null ? createdAt : _date(data['startsAt']),
-      dueAt: _date(data['dueAt']),
-      category: data['category'] as String? ?? 'course',
-      status: (data['status'] as String?) == 'done'
-          ? GoalStatus.done
-          : GoalStatus.active,
-      checkIns: _readCheckIns(data['checkIns']),
-      createdAt: createdAt,
-      updatedAt: _date(data['updatedAt']),
-    );
+    return GoalModel.fromMap(doc.id, data);
   }
 
   Map<String, dynamic> _categoryToFirestore(GoalCategory category) {
@@ -214,10 +237,5 @@ class FirestoreGoalRepository implements IGoalRepository {
     if (value is Timestamp) return value.toDate();
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
-  }
-
-  List<String> _readCheckIns(dynamic raw) {
-    if (raw is! List) return const [];
-    return raw.whereType<String>().toList();
   }
 }

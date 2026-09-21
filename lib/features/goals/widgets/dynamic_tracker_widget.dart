@@ -357,9 +357,11 @@ class _AddTrackerDialogState extends State<_AddTrackerDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -453,8 +455,9 @@ class _AddTrackerDialogState extends State<_AddTrackerDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _save() {
     final title = _titleController.text.trim();

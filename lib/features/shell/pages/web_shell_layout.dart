@@ -8,13 +8,15 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
+import 'package:life_daily_app/core/models/app_view_mode.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/widgets/auth_dialog.dart';
-import 'package:life_daily_app/features/finance/models/finance_entry.dart';
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
+import 'package:life_daily_app/features/finance/widgets/add_finance_entry_dialog.dart';
+import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/pages/goals_page.dart';
+import 'package:life_daily_app/features/goals/widgets/goal_invite_banner.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
-import 'package:life_daily_app/features/shell/widgets/shell_area_style.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_theme_picker.dart';
 
@@ -30,25 +32,62 @@ class WebShellLayout extends StatelessWidget {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _WebSidebar(),
-          VerticalDivider(width: 1, thickness: 1, color: colors.border),
+          // Collapsible Drawer
+          GetBuilder<ShellController>(
+            id: 'shell',
+            builder: (controller) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOutCubic,
+                width: controller.isDrawerOpen ? _WebDrawer.drawerWidth : 0.0,
+                child: const ClipRect(
+                  child: OverflowBox(
+                    minWidth: _WebDrawer.drawerWidth,
+                    maxWidth: _WebDrawer.drawerWidth,
+                    alignment: AlignmentDirectional.topStart,
+                    child: _WebDrawer(),
+                  ),
+                ),
+              );
+            },
+          ),
+          GetBuilder<ShellController>(
+            id: 'shell',
+            builder: (controller) => controller.isDrawerOpen
+                ? VerticalDivider(width: 1, thickness: 1, color: colors.border)
+                : const SizedBox.shrink(),
+          ),
+          // Main Content Area with Top Navigation
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const _WebTopHeader(),
+                const _WebSubNavBar(),
+                const GoalInviteBanner(),
                 Expanded(
-                  child: GetBuilder<ShellController>(
-                    id: 'shell',
-                    builder: (controller) {
-                      return IndexedStack(
-                        index: controller.area.index,
-                        children: const [
-                          GoalsPage(embed: true),
-                          FinancePage(embed: true),
-                        ],
-                      );
-                    },
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: GetBuilder<ShellController>(
+                          id: 'shell',
+                          builder: (controller) {
+                            return IndexedStack(
+                              index: controller.area.index,
+                              children: const [
+                                GoalsPage(embed: true),
+                                FinancePage(embed: true),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -60,17 +99,19 @@ class WebShellLayout extends StatelessWidget {
   }
 }
 
-class _WebSidebar extends StatelessWidget {
-  const _WebSidebar();
+/// Collapsible Drawer containing Workspace utilities, preferences, and account sync.
+/// Note: Goals and Finance have been relocated to the Top Bar per user requirement.
+class _WebDrawer extends StatelessWidget {
+  const _WebDrawer();
 
-  static const double sidebarWidth = 260.0;
+  static const double drawerWidth = 270.0;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appPalette;
 
     return SizedBox(
-      width: sidebarWidth,
+      width: drawerWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.card,
@@ -79,20 +120,26 @@ class _WebSidebar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Drawer Header with Close Button
               Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      padding: const EdgeInsets.all(AppSpacing.sm - 2),
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.14),
+                        color: colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Icon(
-                        Icons.space_dashboard_rounded,
+                        Icons.dashboard_customize_rounded,
                         color: colors.primary,
-                        size: AppIconSize.lg,
+                        size: AppIconSize.md,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -115,99 +162,47 @@ class _WebSidebar extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.md,
-                  ),
-                  children: [
                     GetBuilder<ShellController>(
                       id: 'shell',
-                      builder: (controller) {
-                        return Column(
-                          children: [
-                            _WebNavItem(
-                              icon: Icons.flag_rounded,
-                              label: LocaleKeys.webNavGoals.tr,
-                              selected: controller.area == ShellArea.goals,
-                              color: colors.primary,
-                              onTap: () =>
-                                  controller.selectArea(ShellArea.goals),
-                            ),
-                            if (controller.area == ShellArea.goals) ...[
-                              _WebSubNavItem(
-                                label: LocaleKeys.navList.tr,
-                                selected: controller.sectionIndex == 0,
-                                onTap: () => controller.selectSection(0),
-                              ),
-                              _WebSubNavItem(
-                                label: LocaleKeys.navProgress.tr,
-                                selected: controller.sectionIndex == 1,
-                                onTap: () => controller.selectSection(1),
-                              ),
-                              _WebSubNavItem(
-                                label: LocaleKeys.navFolders.tr,
-                                selected: controller.sectionIndex == 2,
-                                onTap: () => controller.selectSection(2),
-                              ),
-                              _WebSubNavItem(
-                                label: LocaleKeys.navDone.tr,
-                                selected: controller.sectionIndex == 3,
-                                onTap: () => controller.selectSection(3),
-                              ),
-                            ],
-                            const SizedBox(height: AppSpacing.sm),
-                            _WebNavItem(
-                              icon: Icons.account_balance_wallet_rounded,
-                              label: LocaleKeys.webNavFinance.tr,
-                              selected: controller.area == ShellArea.finance,
-                              color: colors.success,
-                              onTap: () =>
-                                  controller.selectArea(ShellArea.finance),
-                            ),
-                            if (controller.area == ShellArea.finance) ...[
-                              _WebSubNavItem(
-                                label: LocaleKeys.navActivity.tr,
-                                selected: controller.sectionIndex == 0,
-                                onTap: () => controller.selectSection(0),
-                              ),
-                              _WebSubNavItem(
-                                label: LocaleKeys.financeCharts.tr,
-                                selected: controller.sectionIndex == 1,
-                                onTap: () => controller.selectSection(1),
-                              ),
-                              _WebSubNavItem(
-                                label: LocaleKeys.financeReports.tr,
-                                selected: controller.sectionIndex == 2,
-                                onTap: () => controller.selectSection(2),
-                              ),
-                              _WebSubNavItem(
-                                label: LocaleKeys.financeMonthPlan.tr,
-                                selected: false,
-                                onTap: () => AppNavigator.toMonthPlan(),
-                              ),
-                            ],
-                          ],
-                        );
-                      },
+                      builder: (ctrl) => IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: colors.textSecondary,
+                          size: AppIconSize.md,
+                        ),
+                        tooltip: 'Close Drawer',
+                        onPressed: ctrl.toggleDrawer,
+                      ),
                     ),
                   ],
                 ),
               ),
               const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+
+              // Drawer Content: Preferences & Cloud Sync
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   children: [
                     const _WebSyncCard(),
                     const SizedBox(height: AppSpacing.md),
+                    Text(
+                      LocaleKeys.theme.tr,
+                      style: AppTextStyles.caption(colors).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     const AppThemePicker(),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      LocaleKeys.language.tr,
+                      style: AppTextStyles.caption(colors).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     GetBuilder<LocaleController>(
                       builder: (locale) {
@@ -249,26 +244,177 @@ class _WebSidebar extends StatelessWidget {
   }
 }
 
-class _WebNavItem extends StatefulWidget {
-  const _WebNavItem({
+/// Sleek Top Header with Drawer Toggle, Core Area Switcher, and Primary Action Button
+class _WebTopHeader extends StatelessWidget {
+  const _WebTopHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.7))),
+        boxShadow: [
+          BoxShadow(
+            color: colors.textPrimary.withValues(alpha: 0.02),
+            offset: const Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: GetBuilder<ShellController>(
+          id: 'shell',
+          builder: (controller) {
+            final isGoals = controller.area == ShellArea.goals;
+
+            return Row(
+              children: [
+                // Toggle Drawer Button
+                IconButton(
+                  icon: Icon(
+                    controller.isDrawerOpen
+                        ? Icons.menu_open_rounded
+                        : Icons.menu_rounded,
+                    color: colors.textPrimary,
+                    size: AppIconSize.lg,
+                  ),
+                  tooltip: controller.isDrawerOpen ? 'Close Menu' : 'Open Menu',
+                  onPressed: controller.toggleDrawer,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+
+                // Brand Pill
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.xs),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(
+                        Icons.space_dashboard_rounded,
+                        color: colors.primary,
+                        size: AppIconSize.md,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      LocaleKeys.appName.tr,
+                      style: AppTextStyles.h6(colors).copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),
+
+                // Prominent Goals & Finance Capsule Switcher in the Top Bar
+                _AreaCapsuleSwitcher(
+                  currentArea: controller.area,
+                  onSelect: (area) => controller.selectArea(area),
+                ),
+
+                const Spacer(),
+
+                // Action Button
+                AppButton(
+                  label: isGoals
+                      ? LocaleKeys.addGoal.tr
+                      : LocaleKeys.financeAdd.tr,
+                  variant: AppButtonVariant.primary,
+                  onPressed: () {
+                    if (isGoals) {
+                      AppNavigator.toGoalEditor();
+                    } else {
+                      AddFinanceEntryDialog.show(context);
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Elegant Capsule Switcher between Goals and Finance in the Top Bar
+class _AreaCapsuleSwitcher extends StatelessWidget {
+  const _AreaCapsuleSwitcher({
+    required this.currentArea,
+    required this.onSelect,
+  });
+
+  final ShellArea currentArea;
+  final ValueChanged<ShellArea> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _CapsuleItem(
+            icon: Icons.flag_rounded,
+            label: LocaleKeys.webNavGoals.tr,
+            selected: currentArea == ShellArea.goals,
+            activeColor: colors.primary,
+            onTap: () => onSelect(ShellArea.goals),
+          ),
+          const SizedBox(width: 4),
+          _CapsuleItem(
+            icon: Icons.account_balance_wallet_rounded,
+            label: LocaleKeys.webNavFinance.tr,
+            selected: currentArea == ShellArea.finance,
+            activeColor: colors.success,
+            onTap: () => onSelect(ShellArea.finance),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CapsuleItem extends StatefulWidget {
+  const _CapsuleItem({
     required this.icon,
     required this.label,
     required this.selected,
-    required this.color,
+    required this.activeColor,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
-  final Color color;
+  final Color activeColor;
   final VoidCallback onTap;
 
   @override
-  State<_WebNavItem> createState() => _WebNavItemState();
+  State<_CapsuleItem> createState() => _CapsuleItemState();
 }
 
-class _WebNavItemState extends State<_WebNavItem> {
+class _CapsuleItemState extends State<_CapsuleItem> {
   bool _hovered = false;
 
   @override
@@ -282,41 +428,38 @@ class _WebNavItemState extends State<_WebNavItem> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+            vertical: AppSpacing.xs + 2,
           ),
           decoration: BoxDecoration(
             color: widget.selected
-                ? widget.color.withValues(alpha: 0.15)
+                ? widget.activeColor.withValues(alpha: 0.15)
                 : _hovered
-                    ? colors.surface
-                    : colors.card.withValues(alpha: 0),
-            borderRadius: BorderRadius.circular(AppRadius.md),
+                    ? colors.card
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
               color: widget.selected
-                  ? widget.color.withValues(alpha: 0.3)
-                  : colors.border.withValues(alpha: 0),
+                  ? widget.activeColor.withValues(alpha: 0.35)
+                  : Colors.transparent,
             ),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 widget.icon,
-                color: widget.selected ? widget.color : colors.textSecondary,
                 size: AppIconSize.md,
+                color: widget.selected ? widget.activeColor : colors.textSecondary,
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  widget.label,
-                  style: AppTextStyles.body1(colors).copyWith(
-                    fontWeight:
-                        widget.selected ? FontWeight.w600 : FontWeight.w500,
-                    color:
-                        widget.selected ? widget.color : colors.textPrimary,
-                  ),
+              const SizedBox(width: AppSpacing.xs + 2),
+              Text(
+                widget.label,
+                style: AppTextStyles.body2(colors).copyWith(
+                  fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w500,
+                  color: widget.selected ? widget.activeColor : colors.textPrimary,
                 ),
               ),
             ],
@@ -327,22 +470,146 @@ class _WebNavItemState extends State<_WebNavItem> {
   }
 }
 
-class _WebSubNavItem extends StatefulWidget {
-  const _WebSubNavItem({
+/// Secondary Top Bar with sub-navigation pills for Goals or Finance
+class _WebSubNavBar extends StatelessWidget {
+  const _WebSubNavBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.6))),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: GetBuilder<ShellController>(
+              id: 'shell',
+              builder: (controller) {
+                final isGoals = controller.area == ShellArea.goals;
+
+                if (isGoals) {
+                  return Row(
+                    children: [
+                      _SubTabPill(
+                        icon: Icons.view_agenda_outlined,
+                        label: LocaleKeys.navList.tr,
+                        selected: controller.sectionIndex == 0 &&
+                            (!Get.isRegistered<GoalsController>() ||
+                                Get.find<GoalsController>().viewMode != AppViewMode.kanban),
+                        onTap: () {
+                          controller.selectSection(0);
+                          if (Get.isRegistered<GoalsController>() &&
+                              Get.find<GoalsController>().viewMode == AppViewMode.kanban) {
+                            Get.find<GoalsController>().setViewMode(AppViewMode.list);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.view_kanban_rounded,
+                        label: LocaleKeys.kanbanBoard.tr,
+                        selected: controller.sectionIndex == 0 &&
+                            Get.isRegistered<GoalsController>() &&
+                            Get.find<GoalsController>().viewMode == AppViewMode.kanban,
+                        onTap: () {
+                          controller.selectSection(0);
+                          if (Get.isRegistered<GoalsController>()) {
+                            Get.find<GoalsController>().setViewMode(AppViewMode.kanban);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.insights_rounded,
+                        label: LocaleKeys.navProgress.tr,
+                        selected: controller.sectionIndex == 1,
+                        onTap: () => controller.selectSection(1),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.folder_outlined,
+                        label: LocaleKeys.navFolders.tr,
+                        selected: controller.sectionIndex == 2,
+                        onTap: () => controller.selectSection(2),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.check_circle_outline_rounded,
+                        label: LocaleKeys.navDone.tr,
+                        selected: controller.sectionIndex == 3,
+                        onTap: () => controller.selectSection(3),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      _SubTabPill(
+                        icon: Icons.receipt_long_rounded,
+                        label: LocaleKeys.navActivity.tr,
+                        selected: controller.sectionIndex == 0,
+                        onTap: () => controller.selectSection(0),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.bar_chart_rounded,
+                        label: LocaleKeys.financeCharts.tr,
+                        selected: controller.sectionIndex == 1,
+                        onTap: () => controller.selectSection(1),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.description_outlined,
+                        label: LocaleKeys.financeReports.tr,
+                        selected: controller.sectionIndex == 2,
+                        onTap: () => controller.selectSection(2),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      _SubTabPill(
+                        icon: Icons.calendar_month_outlined,
+                        label: LocaleKeys.financeMonthPlan.tr,
+                        selected: false,
+                        onTap: () => AppNavigator.toMonthPlan(),
+                      ),
+                    ],
+                  );
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubTabPill extends StatefulWidget {
+  const _SubTabPill({
+    required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
   });
 
+  final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   @override
-  State<_WebSubNavItem> createState() => _WebSubNavItemState();
+  State<_SubTabPill> createState() => _SubTabPillState();
 }
 
-class _WebSubNavItemState extends State<_WebSubNavItem> {
+class _SubTabPillState extends State<_SubTabPill> {
   bool _hovered = false;
 
   @override
@@ -355,53 +622,42 @@ class _WebSubNavItemState extends State<_WebSubNavItem> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsetsDirectional.only(
-            start: AppSpacing.xl,
-            top: 2,
-            bottom: 2,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs + 2,
           ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
+          decoration: BoxDecoration(
+            color: widget.selected
+                ? colors.primary.withValues(alpha: 0.12)
+                : _hovered
+                    ? colors.card
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(
               color: widget.selected
-                  ? colors.primary.withValues(alpha: 0.1)
-                  : _hovered
-                      ? colors.surface
-                      : colors.card.withValues(alpha: 0),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ? colors.primary.withValues(alpha: 0.25)
+                  : Colors.transparent,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: widget.selected
-                        ? colors.primary
-                        : colors.textSecondary,
-                    shape: BoxShape.circle,
-                  ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                widget.icon,
+                size: AppIconSize.sm,
+                color: widget.selected ? colors.primary : colors.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                widget.label,
+                style: AppTextStyles.caption(colors).copyWith(
+                  fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w500,
+                  color: widget.selected ? colors.primary : colors.textSecondary,
                 ),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: AppTextStyles.caption(colors).copyWith(
-                      fontWeight:
-                          widget.selected ? FontWeight.w600 : FontWeight.w400,
-                      color: widget.selected
-                          ? colors.primary
-                          : colors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -484,59 +740,6 @@ class _WebSyncCard extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _WebTopHeader extends StatelessWidget {
-  const _WebTopHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appPalette;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.card,
-        border: Border(bottom: BorderSide(color: colors.border)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        child: GetBuilder<ShellController>(
-          id: 'shell',
-          builder: (controller) {
-            final area = controller.area;
-            final isGoals = area == ShellArea.goals;
-
-            return Row(
-              children: [
-                Icon(area.icon, color: area.accent(colors), size: AppIconSize.md),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  area.titleKey.tr,
-                  style: AppTextStyles.h5(colors),
-                ),
-                const Spacer(),
-                AppButton(
-                  label: isGoals
-                      ? LocaleKeys.addGoal.tr
-                      : LocaleKeys.addExpense.tr,
-                  onPressed: () {
-                    if (isGoals) {
-                      AppNavigator.toGoalEditor();
-                    } else {
-                      AppNavigator.toFinanceEntry(kind: FinanceKind.expense);
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
     );
   }
 }

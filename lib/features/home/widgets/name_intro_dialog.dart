@@ -10,6 +10,7 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
+import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/controllers/profile_controller.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
@@ -18,9 +19,20 @@ class NameIntroDialog extends StatefulWidget {
   const NameIntroDialog({super.key});
 
   static Future<void> showIfNeeded({bool force = false}) {
+    if (!Get.isRegistered<ProfileController>()) return Future.value();
     final profile = Get.find<ProfileController>();
     if (profile.hasName) return Future.value();
-    if (!force && profile.introShown) return Future.value();
+    if (!force) {
+      if (profile.introShown) return Future.value();
+      if (Get.isRegistered<AuthController>()) {
+        final auth = Get.find<AuthController>();
+        final authName = auth.user?.displayName;
+        if (authName != null && authName.trim().isNotEmpty) {
+          profile.saveName(authName.trim());
+          return Future.value();
+        }
+      }
+    }
     profile.markIntroShown();
     final palette = Get.isRegistered<ThemeController>()
         ? Get.find<ThemeController>().palette

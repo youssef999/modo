@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
@@ -36,22 +35,16 @@ class GoalsPage extends StatelessWidget {
               return switch (section) {
                 1 => const SingleChildScrollView(child: GoalProgressCard()),
                 2 => _Folders(controller: controller, shell: shell),
-                3 => GoalsBoard(
+                3 => const GoalsBoard(
                   showHeader: false,
                   showProgress: false,
-                  showFilter: false,
+                  showFilter: true,
                   doneOnly: true,
-                  previewLimit: 3,
-                  sectionTitle: LocaleKeys.navDone.tr,
-                  onViewAll: () => AppNavigator.toGoalsAll(doneOnly: true),
                 ),
-                _ => GoalsBoard(
+                _ => const GoalsBoard(
                   showHeader: false,
                   showProgress: false,
-                  showFilter: false,
-                  previewLimit: 3,
-                  sectionTitle: LocaleKeys.goalsRecent.tr,
-                  onViewAll: AppNavigator.toGoalsAll,
+                  showFilter: true,
                 ),
               };
             },
@@ -99,11 +92,12 @@ class _Folders extends StatelessWidget {
                   message: LocaleKeys.foldersHint.tr,
                 )
               : GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 320,
                     mainAxisSpacing: AppSpacing.md,
                     crossAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 1.05,
+                    childAspectRatio: 1.15,
                   ),
                   itemCount: folders.length,
                   itemBuilder: (context, index) {

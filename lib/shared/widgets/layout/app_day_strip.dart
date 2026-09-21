@@ -104,42 +104,51 @@ class _PeriodChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? colors.primary : colors.card,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        onTap: onTap,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Material(
+        color: selected ? colors.primary : colors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: selected ? null : Border.all(color: colors.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppSpacing.sm,
-              horizontal: AppSpacing.xs,
+        elevation: selected ? 2 : 0,
+        shadowColor: colors.primary.withValues(alpha: 0.25),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: selected
+                  ? null
+                  : Border.all(color: colors.border.withValues(alpha: 0.8)),
             ),
-            child: Column(
-              children: [
-                Text(
-                  top,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.caption(colors).copyWith(
-                    color: selected ? colors.onPrimary : colors.textSecondary,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.sm,
+                horizontal: AppSpacing.xs,
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    top,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption(colors).copyWith(
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? colors.onPrimary : colors.textSecondary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  bottom,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h6(colors).copyWith(
-                    color: selected ? colors.onPrimary : colors.textPrimary,
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    bottom,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h6(colors).copyWith(
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      color: selected ? colors.onPrimary : colors.textPrimary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

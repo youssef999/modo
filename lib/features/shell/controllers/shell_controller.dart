@@ -24,6 +24,19 @@ class ShellNavItem {
 class ShellController extends GetxController {
   ShellArea area = ShellArea.goals;
   int sectionIndex = 0;
+  bool isDrawerOpen = true;
+
+  void toggleDrawer() {
+    isDrawerOpen = !isDrawerOpen;
+    update(['shell']);
+  }
+
+  void setDrawerOpen(bool open) {
+    if (isDrawerOpen != open) {
+      isDrawerOpen = open;
+      update(['shell']);
+    }
+  }
 
   void selectArea(ShellArea value) {
     area = value;

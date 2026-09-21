@@ -9,10 +9,14 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
+import 'package:life_daily_app/features/goals/widgets/app_priority_picker.dart';
+import 'package:life_daily_app/features/goals/widgets/app_status_picker.dart';
 import 'package:life_daily_app/features/goals/widgets/dynamic_tracker_widget.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_action_plan_card.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_check_in_strip.dart';
+import 'package:life_daily_app/features/goals/widgets/goal_members_sheet.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_success_indicator.dart';
+import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
 import 'package:life_daily_app/shared/widgets/feedback/app_confirm_dialog.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_scaffold.dart';
 
@@ -54,6 +58,20 @@ class GoalDetailPage extends StatelessWidget {
         return AppScaffold(
           title: goal.title,
           actions: [
+            if (controller.isGoalOwner(goalId))
+              IconButton(
+                tooltip: LocaleKeys.teamMembers.tr,
+                onPressed: () => GoalMembersSheet.show(context, goalId),
+                icon: Badge(
+                  isLabelVisible: goal.members.length > 1,
+                  label: Text('${goal.members.length}'),
+                  child: Icon(
+                    Icons.group_outlined,
+                    size: AppIconSize.md,
+                    color: colors.primary,
+                  ),
+                ),
+              ),
             IconButton(
               onPressed: () => AppNavigator.toGoalEditor(goal: goal),
               icon: Icon(
@@ -102,7 +120,10 @@ class GoalDetailPage extends StatelessWidget {
                                   : TextDecoration.none,
                             ),
                           ),
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: AppSpacing.sm,
+                            runSpacing: AppSpacing.xs,
                             children: [
                               Text(
                                 controller.goalCategoryLabel(goal),
@@ -111,9 +132,18 @@ class GoalDetailPage extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(width: AppSpacing.sm),
+                              GoalPriorityBadge(
+                                priority: goal.priority,
+                                onChanged: (newPriority) =>
+                                    controller.changeGoalPriority(goal, newPriority),
+                                compact: true,
+                              ),
+                              GoalStatusBadge(
+                                status: goal.status,
+                                onChanged: (newStatus) => controller.changeGoalStatus(goal, newStatus),
+                                compact: true,
+                              ),
                               Text('•', style: AppTextStyles.caption(colors)),
-                              const SizedBox(width: AppSpacing.sm),
                               Text(dateLabel,
                                   style: AppTextStyles.caption(colors)),
                             ],
@@ -129,12 +159,18 @@ class GoalDetailPage extends StatelessWidget {
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 GoalSuccessIndicator(goal: goal),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
+                _TeamCollaboratorsBar(
+                  goal: goal,
+                  isOwner: controller.isGoalOwner(goal.id),
+                  onManage: () => GoalMembersSheet.show(context, goal.id),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 GoalActionPlanCard(goal: goal),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
                 DynamicTrackerWidget(goal: goal),
                 if (goal.isHabit) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.lg),
                   Text(
                     LocaleKeys.goalCheckIns.trParams({
                       'done': '${goal.completedDays}',
@@ -197,5 +233,81 @@ class GoalDetailPage extends StatelessWidget {
     );
     if (picked == null) return;
     await controller.logCheckIn(goal, picked);
+  }
+}
+
+class _TeamCollaboratorsBar extends StatelessWidget {
+  const _TeamCollaboratorsBar({
+    required this.goal,
+    required this.isOwner,
+    required this.onManage,
+  });
+
+  final GoalModel goal;
+  final bool isOwner;
+  final VoidCallback onManage;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+    final members = goal.members;
+
+    return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(
+              Icons.group_outlined,
+              size: AppIconSize.md,
+              color: colors.primary,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  LocaleKeys.teamMembers.tr,
+                  style: AppTextStyles.body2(colors).copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  members.isEmpty
+                      ? LocaleKeys.noMembersYet.tr
+                      : '${members.length} ${LocaleKeys.teamMembers.tr}',
+                  style: AppTextStyles.caption(colors),
+                ),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: onManage,
+            icon: Icon(
+              isOwner ? Icons.person_add_alt_1_outlined : Icons.people_outline_rounded,
+              size: AppIconSize.sm,
+              color: colors.primary,
+            ),
+            label: Text(
+              isOwner ? LocaleKeys.invitePartner.tr : LocaleKeys.teamMembers.tr,
+              style: AppTextStyles.caption(colors).copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -254,4 +254,75 @@ class LocaleKeys {
   static const String webNavGoals = 'web_nav_goals';
   static const String webNavFinance = 'web_nav_finance';
   static const String webNavSettings = 'web_nav_settings';
+
+  // Goal & Task Status
+  static const String statusNotStarted = 'status_not_started';
+  static const String statusInProgress = 'status_in_progress';
+  static const String statusDone = 'status_done';
+  static const String statusArchived = 'status_archived';
+  static const String statusAll = 'status_all';
+  static const String kanbanBoard = 'kanban_board';
+  static const String dragGoalHere = 'drag_goal_here';
+  static const String changeStatus = 'change_status';
+  static const String navBoard = 'nav_board';
+  static const String taskStatusTodo = 'task_status_todo';
+  static const String taskStatusInProgress = 'task_status_in_progress';
+  static const String taskStatusDone = 'task_status_done';
+  static const String statusSectionTodo = 'status_section_todo';
+  static const String statusSectionInProgress = 'status_section_in_progress';
+  static const String statusSectionComplete = 'status_section_complete';
+  static const String selectStatus = 'select_status';
+
+  // Priority & Connected Tasks (Notion-style)
+  static const String priorityLabel = 'priority_label';
+  static const String priorityUrgent = 'priority_urgent';
+  static const String priorityHigh = 'priority_high';
+  static const String priorityMedium = 'priority_medium';
+  static const String priorityLow = 'priority_low';
+  static const String priorityNone = 'priority_none';
+  static const String selectPriority = 'select_priority';
+  static const String changePriority = 'change_priority';
+  static const String connectedGoal = 'connected_goal';
+  static const String reassignGoal = 'reassign_goal';
+  static const String selectConnectedGoal = 'select_connected_goal';
+  static const String prioritySectionUrgent = 'priority_section_urgent';
+  static const String prioritySectionHigh = 'priority_section_high';
+  static const String prioritySectionStandard = 'priority_section_standard';
+  static const String tasksCount = 'tasks_count';
+
+  // Login Page Subtitles
+  static const String signInSubtitle = 'sign_in_subtitle';
+  static const String signUpSubtitle = 'sign_up_subtitle';
+  static const String resetPasswordSubtitle = 'reset_password_subtitle';
+
+  // Team Collaboration
+  static const String teamMembers = 'team_members';
+  static const String invitePartner = 'invite_partner';
+  static const String inviteByEmail = 'invite_by_email';
+  static const String inviteEmailHint = 'invite_email_hint';
+  static const String sendInvite = 'send_invite';
+  static const String inviteSent = 'invite_sent';
+  static const String inviteError = 'invite_error';
+  static const String pendingInvites = 'pending_invites';
+  static const String inviteFrom = 'invite_from';
+  static const String inviteToGoal = 'invite_to_goal';
+  static const String acceptInvite = 'accept_invite';
+  static const String declineInvite = 'decline_invite';
+  static const String roleOwner = 'role_owner';
+  static const String rolePartner = 'role_partner';
+  static const String noMembersYet = 'no_members_yet';
+
+  // Task Assignment
+  static const String assignTo = 'assign_to';
+  static const String assignedTo = 'assigned_to';
+  static const String unassigned = 'unassigned';
+  static const String changeAssignee = 'change_assignee';
+  static const String selectAssignee = 'select_assignee';
+  static const String cancel = 'cancel';
+  static const String fullName = 'full_name';
+  static const String nameRequired = 'name_required';
+  static const String pendingInviteBadge = 'pending_invite_badge';
+  static const String sentInvitesSection = 'sent_invites_section';
+  static const String cancelInvite = 'cancel_invite';
+  static const String inviteCancelled = 'invite_cancelled';
 }

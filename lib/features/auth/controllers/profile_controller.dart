@@ -16,26 +16,46 @@ class ProfileController extends GetxController {
 
   bool get hasName => displayName.trim().isNotEmpty;
 
-  bool get introShown => _introShown;
+  bool get introShown =>
+      _introShown || (_storage.read<bool>('name_intro_shown') ?? false);
 
   void markIntroShown() {
     _introShown = true;
+    _storage.write('name_intro_shown', true);
   }
 
   @override
   void onInit() {
     super.onInit();
     displayName = _storage.read<String>(StorageKeys.displayName) ?? '';
+    if (displayName.isEmpty && Get.isRegistered<AuthController>()) {
+      final authUser = Get.find<AuthController>().user;
+      if (authUser?.displayName != null && authUser!.displayName!.isNotEmpty) {
+        displayName = authUser.displayName!;
+        _storage.write(StorageKeys.displayName, displayName);
+      }
+    }
   }
 
   Future<void> syncFromRemote() async {
-    final uid = Get.find<AuthController>().user?.uid;
+    if (!Get.isRegistered<AuthController>()) return;
+    final auth = Get.find<AuthController>();
+    final uid = auth.user?.uid;
     if (uid == null) return;
     final remote = await _profiles.readDisplayName(uid);
-    if (remote == null || remote.isEmpty) return;
-    displayName = remote;
-    await _storage.write(StorageKeys.displayName, remote);
-    update(['profile']);
+    if (remote != null && remote.isNotEmpty) {
+      displayName = remote;
+      await _storage.write(StorageKeys.displayName, remote);
+      update(['profile']);
+      return;
+    }
+    final authName = auth.user?.displayName;
+    if (authName != null && authName.trim().isNotEmpty) {
+      displayName = authName.trim();
+      await _storage.write(StorageKeys.displayName, displayName);
+      await _profiles.saveDisplayName(uid, displayName);
+      update(['profile']);
+    }
   }
 
   Future<void> saveName(String value) async {

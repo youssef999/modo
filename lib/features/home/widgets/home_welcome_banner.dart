@@ -6,6 +6,7 @@ import 'package:life_daily_app/core/theme/app_gradients.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
+import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/controllers/profile_controller.dart';
 import 'package:life_daily_app/features/home/widgets/name_intro_dialog.dart';
 
@@ -18,13 +19,20 @@ class HomeWelcomeBanner extends StatelessWidget {
     return GetBuilder<ProfileController>(
       id: 'profile',
       builder: (profile) {
-        final title = profile.hasName
-            ? LocaleKeys.helloName.trParams({'name': profile.displayName})
+        final authName = Get.isRegistered<AuthController>()
+            ? Get.find<AuthController>().user?.displayName?.trim()
+            : null;
+        final name = profile.displayName.trim().isNotEmpty
+            ? profile.displayName.trim()
+            : (authName != null && authName.isNotEmpty ? authName : '');
+        final hasName = name.isNotEmpty;
+        final title = hasName
+            ? LocaleKeys.helloName.trParams({'name': name})
             : LocaleKeys.helloGuest.tr;
         return Material(
           color: colors.card.withValues(alpha: 0),
           child: InkWell(
-            onTap: profile.hasName
+            onTap: hasName
                 ? null
                 : () => NameIntroDialog.showIfNeeded(force: true),
             borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -62,12 +70,34 @@ class HomeWelcomeBanner extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            LocaleKeys.appName.tr,
-                            style: AppTextStyles.caption(colors).copyWith(
-                              color: colors.onPrimary.withValues(alpha: 0.78),
-                              letterSpacing: 1.2,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                LocaleKeys.appName.tr,
+                                style: AppTextStyles.caption(colors).copyWith(
+                                  color: colors.onPrimary.withValues(alpha: 0.78),
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (hasName) ...[
+                                const SizedBox(width: AppSpacing.xs),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.onPrimary.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                  child: const Text(
+                                    '👋',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
