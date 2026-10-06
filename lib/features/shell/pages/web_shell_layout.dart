@@ -12,6 +12,7 @@ import 'package:life_daily_app/core/models/app_view_mode.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/widgets/auth_dialog.dart';
 import 'package:life_daily_app/features/auth/widgets/profile_header.dart';
+import 'package:life_daily_app/features/auth/widgets/sign_out_button.dart';
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
 import 'package:life_daily_app/features/daily/pages/daily_hub_page.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
@@ -229,7 +230,13 @@ class _WebDrawer extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _WebSyncCard(),
+                    const Row(
+                      children: [
+                        Expanded(child: _WebSyncCard()),
+                        SizedBox(width: AppSpacing.xs),
+                        SignOutButton(iconOnly: true),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     const DailyReminderTile(),
                     const SizedBox(height: AppSpacing.md),

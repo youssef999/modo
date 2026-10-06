@@ -212,6 +212,17 @@ class GoalsController extends GetxController {
     await load();
   }
 
+  /// Drops the signed-out account's data from memory.
+  void clearAccountData() {
+    _loadGeneration++;
+    goals = [];
+    categories = [];
+    pendingInvites = [];
+    selectedCategoryId = null;
+    isLoading = true;
+    update(['goals']);
+  }
+
   void selectCategory(String? categoryId) {
     selectedCategoryId = categoryId;
     update(['goals']);

@@ -52,7 +52,7 @@ void main() {
       );
       await controller.bootstrap();
       expect(controller.isLoggedIn, isTrue);
-      await controller.signOut();
+      expect(await controller.signOut(), isTrue);
       expect(controller.user, isNull);
       expect(controller.isLoggedIn, isFalse);
     });

@@ -416,6 +416,18 @@ class FinanceController extends GetxController {
     await load();
   }
 
+  /// Drops the signed-out account's data from memory.
+  void clearAccountData() {
+    _loadGeneration++;
+    categories = [];
+    entries = [];
+    monthPlans = [];
+    commitments = [];
+    selectedCategoryId = null;
+    isLoading = true;
+    update(['finance']);
+  }
+
   void selectCategory(String? id) {
     selectedCategoryId = selectedCategoryId == id ? null : id;
     update(['finance']);

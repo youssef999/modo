@@ -14,15 +14,24 @@ import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 class AppConfirmDialog {
   AppConfirmDialog._();
 
+  /// Defaults to a delete confirmation; pass [icon] and [confirmLabel] for
+  /// other destructive actions.
   static Future<bool> show({
     required String title,
     required String message,
+    IconData icon = Icons.delete_outline_rounded,
+    String? confirmLabel,
   }) async {
     final colors = Get.isRegistered<ThemeController>()
         ? Get.find<ThemeController>().palette
         : AppColors.light;
     final result = await Get.dialog<bool>(
-      _ConfirmBody(title: title, message: message),
+      _ConfirmBody(
+        title: title,
+        message: message,
+        icon: icon,
+        confirmLabel: confirmLabel ?? LocaleKeys.delete.tr,
+      ),
       barrierDismissible: true,
       barrierColor: colors.textPrimary.withValues(alpha: 0.45),
     );
@@ -31,10 +40,17 @@ class AppConfirmDialog {
 }
 
 class _ConfirmBody extends StatelessWidget {
-  const _ConfirmBody({required this.title, required this.message});
+  const _ConfirmBody({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.confirmLabel,
+  });
 
   final String title;
   final String message;
+  final IconData icon;
+  final String confirmLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +87,7 @@ class _ConfirmBody extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.delete_outline_rounded,
+                        icon,
                         color: colors.error,
                         size: AppIconSize.xl,
                       ),
@@ -91,7 +107,7 @@ class _ConfirmBody extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppButton(
-                    label: LocaleKeys.delete.tr,
+                    label: confirmLabel,
                     variant: AppButtonVariant.danger,
                     onPressed: () => Get.back(result: true),
                   ),

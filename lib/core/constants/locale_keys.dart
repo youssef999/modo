@@ -243,6 +243,8 @@ class LocaleKeys {
   static const String noAccount = 'no_account';
   static const String alreadyHaveAccount = 'already_have_account';
   static const String signOut = 'sign_out';
+  static const String signOutTitle = 'sign_out_title';
+  static const String signOutMessage = 'sign_out_message';
   static const String signedInAs = 'signed_in_as';
   static const String cloudSync = 'cloud_sync';
   static const String syncStatusSynced = 'sync_status_synced';

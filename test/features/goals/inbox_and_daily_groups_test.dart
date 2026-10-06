@@ -363,6 +363,27 @@ void main() {
     });
   });
 
+  test('signing out clears the account data from memory', () async {
+    repo.goals = [
+      _goal(
+        'g1',
+        tasks: const [GoalTask(id: 't', title: 'T')],
+      ),
+    ];
+    await controller.load();
+    controller.selectCategory('work');
+    expect(controller.goals, isNotEmpty);
+
+    controller.clearAccountData();
+    expect(controller.goals, isEmpty);
+    expect(controller.categories, isEmpty);
+    expect(controller.selectedCategoryId, isNull);
+    expect(
+      controller.boardItems.values.every((items) => items.isEmpty),
+      isTrue,
+    );
+  });
+
   group('Goal progress', () {
     GoalModel withTasks(GoalStatus status) => _goal(
       'g1',

@@ -256,6 +256,9 @@ const Map<String, String> arSa = {
   LocaleKeys.noAccount: 'ليس لديك حساب؟ أنشئ حساباً الآن',
   LocaleKeys.alreadyHaveAccount: 'لديك حساب بالفعل؟ سجل الدخول',
   LocaleKeys.signOut: 'تسجيل الخروج',
+  LocaleKeys.signOutTitle: 'تسجيل الخروج؟',
+  LocaleKeys.signOutMessage:
+      'بياناتك محفوظة في حسابك. سجّل دخول تاني وهتلاقيها.',
   LocaleKeys.signedInAs: 'تم تسجيل الدخول باسم @email',
   LocaleKeys.cloudSync: 'المزامنة السحابية',
   LocaleKeys.syncStatusSynced: 'البيانات محفوظة سحابياً',

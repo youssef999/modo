@@ -103,8 +103,9 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> signOut() async {
-    if (isBusy) return;
+  /// Returns true once the session is closed and in-memory data is cleared.
+  Future<bool> signOut() async {
+    if (isBusy) return false;
     isBusy = true;
     errorMessage = null;
     infoMessage = null;
@@ -113,11 +114,23 @@ class AuthController extends GetxController {
       await _auth.signOut();
       user = null;
       await _clearProfile();
+      _clearAccountData();
+      return true;
     } catch (error) {
       errorMessage = _message(error);
+      return false;
     } finally {
       isBusy = false;
       update(['auth']);
+    }
+  }
+
+  void _clearAccountData() {
+    if (Get.isRegistered<GoalsController>()) {
+      Get.find<GoalsController>().clearAccountData();
+    }
+    if (Get.isRegistered<FinanceController>()) {
+      Get.find<FinanceController>().clearAccountData();
     }
   }
 

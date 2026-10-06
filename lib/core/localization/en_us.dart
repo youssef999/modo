@@ -258,6 +258,9 @@ const Map<String, String> enUs = {
   LocaleKeys.noAccount: "Don't have an account? Sign up",
   LocaleKeys.alreadyHaveAccount: 'Already have an account? Sign in',
   LocaleKeys.signOut: 'Sign Out',
+  LocaleKeys.signOutTitle: 'Sign out?',
+  LocaleKeys.signOutMessage:
+      'Your data stays saved in your account. Sign in again to see it.',
   LocaleKeys.signedInAs: 'Signed in as @email',
   LocaleKeys.cloudSync: 'Cloud Sync',
   LocaleKeys.syncStatusSynced: 'Backed up to cloud',

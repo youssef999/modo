@@ -7,6 +7,7 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/auth/widgets/profile_header.dart';
 import 'package:life_daily_app/features/auth/widgets/save_data_card.dart';
+import 'package:life_daily_app/features/auth/widgets/sign_out_button.dart';
 import 'package:life_daily_app/features/notifications/widgets/daily_reminder_tile.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_theme_picker.dart';
@@ -66,6 +67,8 @@ class AppShellDrawer extends StatelessWidget {
             const DailyReminderTile(),
             const SizedBox(height: AppSpacing.lg),
             const SaveDataCard(),
+            const SizedBox(height: AppSpacing.lg),
+            const SignOutButton(),
           ],
         ),
       ),

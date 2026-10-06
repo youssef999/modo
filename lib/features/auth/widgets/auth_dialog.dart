@@ -8,6 +8,7 @@ import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
+import 'package:life_daily_app/features/auth/widgets/sign_out_button.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/cards/app_card.dart';
 import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
@@ -178,7 +179,12 @@ class _AuthDialogState extends State<AuthDialog> {
         AppButton(
           label: LocaleKeys.signOut.tr,
           variant: AppButtonVariant.secondary,
-          onPressed: auth.isBusy ? null : () => auth.signOut(),
+          onPressed: auth.isBusy
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                  SignOutButton.confirmAndSignOut();
+                },
         ),
       ],
     );
