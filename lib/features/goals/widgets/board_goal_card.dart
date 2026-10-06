@@ -46,9 +46,7 @@ class _BoardGoalCardState extends State<BoardGoalCard> {
     final tone = category?.color(colors) ?? colors.primary;
     final total = goal.tasks.length;
     final done = goal.completedTasksCount;
-    final progress = goal.isHabit
-        ? goal.progress
-        : (total == 0 ? 0.0 : done / total);
+    final progress = goal.progress;
 
     return Material(
       color: colors.card,
@@ -116,8 +114,8 @@ class _BoardGoalCardState extends State<BoardGoalCard> {
                   _ProgressRow(
                     progress: progress,
                     label: goal.isHabit
-                        ? '${(progress * 100).round()}%'
-                        : '$done/$total',
+                        ? '${goal.progressPercent}%'
+                        : '$done/$total · ${goal.progressPercent}%',
                     tone: tone,
                     expanded: _expanded,
                     canExpand: true,
@@ -286,9 +284,7 @@ class _SubtaskRowState extends State<_SubtaskRow> {
                     size: AppIconSize.sm,
                   ),
                   label: Text(
-                    items.isEmpty
-                        ? ''
-                        : '${task.subtasksCompletedCount}/${items.length}',
+                    items.isEmpty ? '' : '${items.length}',
                     style: AppTextStyles.caption(colors).copyWith(
                       color: _showChecklist
                           ? colors.primary

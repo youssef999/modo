@@ -466,7 +466,7 @@ class GoalsController extends GetxController {
     );
   }
 
-  /// Adding an item to a finished task reopens it.
+  /// Subtasks never change their task's status.
   Future<void> addSubtask(GoalModel goal, String taskId, String title) async {
     final clean = title.trim();
     if (clean.isEmpty) return;
@@ -476,32 +476,21 @@ class GoalsController extends GetxController {
         title: clean,
         order: task.subtasks.length,
       );
-      return task.copyWith(
-        subtasks: [...task.subtasks, item],
-        status: task.status == GoalTaskStatus.done
-            ? GoalTaskStatus.inProgress
-            : task.status,
-      );
+      return task.copyWith(subtasks: [...task.subtasks, item]);
     });
   }
 
-  /// Checking items moves the task: all checked → done, some → in progress.
   Future<void> toggleSubtask(GoalModel goal, String taskId, String subId) {
-    return _updateTask(goal, taskId, (task) {
-      final items = [
-        for (final s in task.subtasks)
-          s.id == subId ? s.copyWith(isCompleted: !s.isCompleted) : s,
-      ];
-      final checked = items.where((s) => s.isCompleted).length;
-      final status = checked == items.length
-          ? GoalTaskStatus.done
-          : (checked > 0 || task.status == GoalTaskStatus.done)
-          ? (task.status == GoalTaskStatus.pending
-                ? GoalTaskStatus.pending
-                : GoalTaskStatus.inProgress)
-          : task.status;
-      return task.copyWith(subtasks: items, status: status);
-    });
+    return _updateTask(
+      goal,
+      taskId,
+      (task) => task.copyWith(
+        subtasks: [
+          for (final s in task.subtasks)
+            s.id == subId ? s.copyWith(isCompleted: !s.isCompleted) : s,
+        ],
+      ),
+    );
   }
 
   Future<void> deleteSubtask(GoalModel goal, String taskId, String subId) {

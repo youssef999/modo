@@ -50,11 +50,6 @@ class GoalTask {
   final String? categoryId;
 
   bool get isCompleted => status == GoalTaskStatus.done;
-  int get subtasksCompletedCount => subtasks.where((s) => s.isCompleted).length;
-  double get subtasksProgress => subtasks.isEmpty
-      ? (isCompleted ? 1.0 : 0.0)
-      : subtasksCompletedCount / subtasks.length;
-  int get subtasksProgressPercent => (subtasksProgress * 100).round();
 
   /// Initials for the assignee avatar (derived from assigneeName or assigneeEmail).
   String get assigneeInitials {

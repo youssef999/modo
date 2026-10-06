@@ -340,31 +340,49 @@ void main() {
 
     GoalTask task() => controller.goalById('g1')!.tasks.single;
 
-    test('checking items moves the task between statuses', () async {
+    test('checking items never changes the task status', () async {
       await controller.addSubtask(controller.goalById('g1')!, 't1', 'Shoes');
       await controller.addSubtask(controller.goalById('g1')!, 't1', 'Socks');
-      final first = task().subtasks.first.id;
-      final second = task().subtasks.last.id;
+      for (final item in task().subtasks) {
+        await controller.toggleSubtask(
+          controller.goalById('g1')!,
+          't1',
+          item.id,
+        );
+      }
+      expect(task().subtasks.every((s) => s.isCompleted), isTrue);
+      expect(task().status, GoalTaskStatus.todo);
 
-      await controller.toggleSubtask(controller.goalById('g1')!, 't1', first);
-      expect(task().status, GoalTaskStatus.inProgress);
-
-      await controller.toggleSubtask(controller.goalById('g1')!, 't1', second);
-      expect(task().status, GoalTaskStatus.done);
-
-      await controller.toggleSubtask(controller.goalById('g1')!, 't1', second);
-      expect(task().status, GoalTaskStatus.inProgress);
-    });
-
-    test('adding an item reopens a finished task', () async {
       await controller.changeTaskStatus(
         controller.goalById('g1')!,
         't1',
         GoalTaskStatus.done,
       );
       await controller.addSubtask(controller.goalById('g1')!, 't1', 'Hat');
-      expect(task().status, GoalTaskStatus.inProgress);
-      expect(task().subtasks.single.title, 'Hat');
+      expect(task().status, GoalTaskStatus.done);
+    });
+  });
+
+  group('Goal progress', () {
+    GoalModel withTasks(GoalStatus status) => _goal(
+      'g1',
+      tasks: const [
+        GoalTask(id: 'a', title: 'A', status: GoalTaskStatus.done),
+        GoalTask(id: 'b', title: 'B'),
+      ],
+    ).copyWith(status: status);
+
+    test('follows finished tasks whatever the goal status', () {
+      for (final status in GoalStatus.values) {
+        final goal = withTasks(status);
+        expect(goal.progressPercent, 50, reason: status.name);
+        expect(goal.overallSuccessPercent, 50, reason: status.name);
+      }
+    });
+
+    test('a goal without tasks counts only when done', () {
+      expect(_goal('g1').copyWith(status: GoalStatus.done).progress, 1);
+      expect(_goal('g1').copyWith(status: GoalStatus.inProgress).progress, 0);
     });
   });
 

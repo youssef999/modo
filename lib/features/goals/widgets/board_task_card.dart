@@ -139,7 +139,7 @@ class _BoardTaskCardState extends State<BoardTaskCard> {
                   child: BoardChip(
                     label: items.isEmpty
                         ? LocaleKeys.checklist.tr
-                        : '${task.subtasksCompletedCount}/${items.length}',
+                        : '${items.length}',
                     icon: Icons.checklist_rounded,
                     tone: _showChecklist
                         ? colors.primary

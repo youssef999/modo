@@ -90,10 +90,13 @@ class GoalModel {
     }).length;
   }
 
+  /// Non-habit goals with tasks progress by finished tasks, whatever the
+  /// goal's status; without tasks only marking the goal done counts.
   double get progress {
     if (isHabit) {
       return (completedDays / plannedDays).clamp(0, 1);
     }
+    if (tasks.isNotEmpty) return taskCompletionRate;
     return isDone ? 1 : 0;
   }
 
@@ -128,17 +131,9 @@ class GoalModel {
       final sum = components.fold<double>(0.0, (acc, v) => acc + v);
       return (sum / components.length).clamp(0, 1);
     } else {
-      if (isDone) return 1.0;
-      final components = <double>[];
-      if (tasks.isNotEmpty) {
-        components.add(taskCompletionRate);
-      }
-      if (trackers.isNotEmpty) {
-        components.add(trackerProgress);
-      }
-      if (components.isEmpty) return 0.0;
-      final sum = components.fold<double>(0.0, (acc, v) => acc + v);
-      return (sum / components.length).clamp(0, 1);
+      if (tasks.isNotEmpty) return taskCompletionRate;
+      if (trackers.isNotEmpty) return trackerProgress;
+      return isDone ? 1.0 : 0.0;
     }
   }
 
