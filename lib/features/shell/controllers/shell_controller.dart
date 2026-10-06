@@ -3,26 +3,25 @@ import 'package:get/get.dart';
 import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
-import 'package:life_daily_app/features/finance/models/finance_entry.dart';
+import 'package:life_daily_app/features/shell/models/quick_add_type.dart';
 
-enum ShellArea { goals, finance }
+/// Index order matches the shell IndexedStack children.
+enum ShellArea { today, goals, finance }
 
 class ShellNavItem {
   const ShellNavItem({
     required this.icon,
     required this.labelKey,
-    required this.sectionIndex,
-    this.opensPlan = false,
+    required this.area,
   });
 
   final IconData icon;
   final String labelKey;
-  final int sectionIndex;
-  final bool opensPlan;
+  final ShellArea area;
 }
 
 class ShellController extends GetxController {
-  ShellArea area = ShellArea.goals;
+  ShellArea area = ShellArea.today;
   int sectionIndex = 0;
   bool isDrawerOpen = true;
 
@@ -45,10 +44,7 @@ class ShellController extends GetxController {
     update(['shell']);
   }
 
-  void selectSection(
-    int index, {
-    bool opensPlan = false,
-  }) {
+  void selectSection(int index, {bool opensPlan = false}) {
     if (opensPlan) {
       AppNavigator.toMonthPlan();
       return;
@@ -58,72 +54,32 @@ class ShellController extends GetxController {
     update(['shell']);
   }
 
-  void onFab() {
-    switch (area) {
-      case ShellArea.goals:
-        AppNavigator.toGoalEditor();
-      case ShellArea.finance:
-        AppNavigator.toFinanceEntry(kind: FinanceKind.expense);
-    }
-  }
+  QuickAddType get fabType =>
+      area == ShellArea.finance ? QuickAddType.money : QuickAddType.task;
 
   List<ShellNavItem> get leftItems {
-    return switch (area) {
-      ShellArea.goals => const [
-        ShellNavItem(
-          icon: Icons.flag_outlined,
-          labelKey: LocaleKeys.navList,
-          sectionIndex: 0,
-        ),
-        ShellNavItem(
-          icon: Icons.donut_large_outlined,
-          labelKey: LocaleKeys.navProgress,
-          sectionIndex: 1,
-        ),
-      ],
-      ShellArea.finance => const [
-        ShellNavItem(
-          icon: Icons.receipt_long_outlined,
-          labelKey: LocaleKeys.navActivity,
-          sectionIndex: 0,
-        ),
-        ShellNavItem(
-          icon: Icons.pie_chart_outline_rounded,
-          labelKey: LocaleKeys.financeCharts,
-          sectionIndex: 1,
-        ),
-      ],
-    };
+    return const [
+      ShellNavItem(
+        icon: Icons.calendar_today_rounded,
+        labelKey: LocaleKeys.todayTitle,
+        area: ShellArea.today,
+      ),
+      ShellNavItem(
+        icon: Icons.task_alt_rounded,
+        labelKey: LocaleKeys.navTasks,
+        area: ShellArea.goals,
+      ),
+    ];
   }
 
   List<ShellNavItem> get rightItems {
-    return switch (area) {
-      ShellArea.goals => const [
-        ShellNavItem(
-          icon: Icons.folder_outlined,
-          labelKey: LocaleKeys.navFolders,
-          sectionIndex: 2,
-        ),
-        ShellNavItem(
-          icon: Icons.task_alt_outlined,
-          labelKey: LocaleKeys.navDone,
-          sectionIndex: 3,
-        ),
-      ],
-      ShellArea.finance => const [
-        ShellNavItem(
-          icon: Icons.insights_outlined,
-          labelKey: LocaleKeys.financeReports,
-          sectionIndex: 2,
-        ),
-        ShellNavItem(
-          icon: Icons.account_balance_wallet_outlined,
-          labelKey: LocaleKeys.financeMonthPlan,
-          sectionIndex: 2,
-          opensPlan: true,
-        ),
-      ],
-    };
+    return const [
+      ShellNavItem(
+        icon: Icons.account_balance_wallet_rounded,
+        labelKey: LocaleKeys.financeTitle,
+        area: ShellArea.finance,
+      ),
+    ];
   }
 
   void _syncFinanceTab() {

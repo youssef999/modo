@@ -10,13 +10,30 @@ import 'package:life_daily_app/core/theme/app_palette.dart';
 import 'package:life_daily_app/core/theme/app_theme_id.dart';
 
 class AppThemePicker extends StatelessWidget {
-  const AppThemePicker({super.key});
+  const AppThemePicker({super.key, this.compact = false});
+
+  /// One row of color dots instead of a full list.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ThemeController>(
       id: 'theme',
       builder: (controller) {
+        if (compact) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final id in AppThemeId.values)
+                _ThemeDot(
+                  palette: AppColors.forId(id),
+                  label: _label(id),
+                  selected: controller.themeId == id,
+                  onTap: () => controller.setTheme(id),
+                ),
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -71,7 +88,9 @@ class _ThemeOption extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Ink(
           decoration: BoxDecoration(
-            color: selected ? colors.primary.withValues(alpha: 0.08) : colors.card,
+            color: selected
+                ? colors.primary.withValues(alpha: 0.08)
+                : colors.card,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: selected ? colors.primary : colors.border,
@@ -96,8 +115,72 @@ class _ThemeOption extends StatelessWidget {
                   ),
                 ),
                 if (selected)
-                  Icon(Icons.check_circle_rounded, color: colors.primary, size: 20),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: colors.primary,
+                    size: 20,
+                  ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeDot extends StatelessWidget {
+  const _ThemeDot({
+    required this.palette,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppPalette palette;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.all(AppSpacing.xs / 2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected
+                    ? colors.primary
+                    : colors.card.withValues(alpha: 0),
+                width: 2,
+              ),
+            ),
+            child: SizedBox(
+              width: AppSpacing.xl,
+              height: AppSpacing.xl,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: palette.border),
+                  gradient: LinearGradient(
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
+                    stops: const [0.5, 0.5],
+                    colors: [palette.background, palette.primary],
+                  ),
+                ),
+              ),
             ),
           ),
         ),

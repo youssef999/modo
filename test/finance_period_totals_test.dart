@@ -34,16 +34,8 @@ void main() {
           amount: 100,
           at: DateTime(2026, 8, 10),
         ),
-        entry(
-          kind: FinanceKind.expense,
-          amount: 50,
-          at: DateTime(2026, 8, 9),
-        ),
-        entry(
-          kind: FinanceKind.expense,
-          amount: 999,
-          at: DateTime(2026, 8, 8),
-        ),
+        entry(kind: FinanceKind.expense, amount: 50, at: DateTime(2026, 8, 9)),
+        entry(kind: FinanceKind.expense, amount: 999, at: DateTime(2026, 8, 8)),
         entry(
           kind: FinanceKind.salary,
           amount: 500,

@@ -2,6 +2,33 @@ class LocaleKeys {
   LocaleKeys._();
 
   static const String appName = 'app_name';
+  static const String brandTagline = 'brand_tagline';
+  static const String financeDayView = 'finance_day_view';
+  static const String financeMonthView = 'finance_month_view';
+  static const String financeNet = 'finance_net';
+  static const String financeDayEntries = 'finance_day_entries';
+  static const String financeDayEmpty = 'finance_day_empty';
+  static const String financeBackToToday = 'finance_back_to_today';
+  static const String financeLeftToday = 'finance_left_today';
+  static const String previousWeek = 'previous_week';
+  static const String nextWeek = 'next_week';
+  static const String generalTasks = 'general_tasks';
+  static const String whenToday = 'when_today';
+  static const String whenTomorrow = 'when_tomorrow';
+  static const String whenPickDate = 'when_pick_date';
+  static const String whenAnytime = 'when_anytime';
+  static const String overdue = 'overdue';
+  static const String scheduled = 'scheduled';
+  static const String anytime = 'anytime';
+  static const String addTypeTask = 'add_type_task';
+  static const String addTypeMoney = 'add_type_money';
+  static const String addTypeGoal = 'add_type_goal';
+  static const String quickAddTaskHint = 'quick_add_task_hint';
+  static const String taskSection = 'task_section';
+  static const String allSections = 'all_sections';
+  static const String checklist = 'checklist';
+  static const String addChecklistItem = 'add_checklist_item';
+  static const String noArchived = 'no_archived';
   static const String homeTitle = 'home_title';
   static const String homeSubtitle = 'home_subtitle';
   static const String theme = 'theme';
@@ -78,7 +105,14 @@ class LocaleKeys {
   static const String askNameHint = 'ask_name_hint';
   static const String askNameSubtitle = 'ask_name_subtitle';
   static const String saveName = 'save_name';
-  static const String maybeLater = 'maybe_later';
+  static const String askNameLocked = 'ask_name_locked';
+  static const String profileNoEmail = 'profile_no_email';
+  static const String dailyReminder = 'daily_reminder';
+  static const String dailyReminderTime = 'daily_reminder_time';
+  static const String reminderTitle = 'reminder_title';
+  static const String reminderBody = 'reminder_body';
+  static const String reminderBodyEmpty = 'reminder_body_empty';
+  static const String reminderChannel = 'reminder_channel';
   static const String helloName = 'hello_name';
   static const String helloGuest = 'hello_guest';
   static const String homePromo = 'home_promo';
@@ -239,7 +273,8 @@ class LocaleKeys {
 
   // Finance Commitments
   static const String financeCommitments = 'finance_commitments';
-  static const String financeCommitmentsSubtitle = 'finance_commitments_subtitle';
+  static const String financeCommitmentsSubtitle =
+      'finance_commitments_subtitle';
   static const String financeAddCommitment = 'finance_add_commitment';
   static const String financeCommitmentTitle = 'finance_commitment_title';
   static const String financeDueDay = 'finance_due_day';
@@ -266,6 +301,7 @@ class LocaleKeys {
   static const String changeStatus = 'change_status';
   static const String navBoard = 'nav_board';
   static const String taskStatusTodo = 'task_status_todo';
+  static const String taskStatusPending = 'task_status_pending';
   static const String taskStatusInProgress = 'task_status_in_progress';
   static const String taskStatusDone = 'task_status_done';
   static const String statusSectionTodo = 'status_section_todo';
@@ -319,10 +355,30 @@ class LocaleKeys {
   static const String changeAssignee = 'change_assignee';
   static const String selectAssignee = 'select_assignee';
   static const String cancel = 'cancel';
-  static const String fullName = 'full_name';
-  static const String nameRequired = 'name_required';
-  static const String pendingInviteBadge = 'pending_invite_badge';
-  static const String sentInvitesSection = 'sent_invites_section';
-  static const String cancelInvite = 'cancel_invite';
-  static const String inviteCancelled = 'invite_cancelled';
+
+  // Daily Tracking Hub (Focus on What Counts Today)
+  static const String todayTitle = 'today_title';
+  static const String todayHabitsTasksCount = 'today_habits_tasks_count';
+  static const String todayHabits = 'today_habits';
+  static const String todayTasks = 'today_tasks';
+  static const String todayFinance = 'today_finance';
+  static const String todayCompleted = 'today_completed';
+  static const String habitEveryDay = 'habit_every_day';
+  static const String habitDaysPerWeek = 'habit_days_per_week';
+  static const String spendToday = 'spend_today';
+  static const String dailySafeLimit = 'daily_safe_limit';
+  static const String commitmentsDueToday = 'commitments_due_today';
+  static const String upcomingCommitments = 'upcoming_commitments';
+  static const String paidCommitments = 'paid_commitments';
+  static const String quickAddExpense = 'quick_add_expense';
+  static const String quickAddIncome = 'quick_add_income';
+  static const String myDay = 'my_day';
+  static const String next7Days = 'next_7_days';
+  static const String allMyTasks = 'all_my_tasks';
+  static const String taskBoard = 'task_board';
+  static const String addSection = 'add_section';
+  static const String allTasks = 'all_tasks';
+  static const String selectGoal = 'select_goal';
+  static const String noHabitsToday = 'no_habits_today';
+  static const String noTasksToday = 'no_tasks_today';
 }

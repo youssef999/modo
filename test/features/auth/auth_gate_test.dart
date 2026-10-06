@@ -65,23 +65,13 @@ void main() {
         email: 'test@example.com',
         hasPassword: true,
       );
-      final ok = await controller.signInWithEmail('test@example.com', 'pass123');
-      expect(ok, isTrue);
-      expect(controller.isLoggedIn, isTrue);
-      expect(controller.user?.email, equals('test@example.com'));
-    });
-
-    test('registerWithEmail sets authenticated user and passes displayName', () async {
-      fakeAuth.user = null;
-      final ok = await controller.registerWithEmail(
-        'newuser@example.com',
+      final ok = await controller.signInWithEmail(
+        'test@example.com',
         'pass123',
-        displayName: 'Youssef Mak',
       );
       expect(ok, isTrue);
       expect(controller.isLoggedIn, isTrue);
-      expect(controller.user?.email, equals('newuser@example.com'));
-      expect(controller.user?.displayName, equals('Youssef Mak'));
+      expect(controller.user?.email, equals('test@example.com'));
     });
   });
 }

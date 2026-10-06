@@ -5,5 +5,7 @@ abstract class IUserProfileService {
 
   Future<String?> readDisplayName(String uid);
 
-  Future<void> saveDisplayName(String uid, String name);
+  /// Writes [name] only if the account has no name yet.
+  /// Returns false when a name was already stored.
+  Future<bool> claimDisplayName(String uid, String name);
 }

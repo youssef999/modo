@@ -29,9 +29,7 @@ class AppSectionHeader extends StatelessWidget {
     final colors = context.appPalette;
     return Row(
       children: [
-        Expanded(
-          child: Text(title, style: AppTextStyles.h6(colors)),
-        ),
+        Expanded(child: Text(title, style: AppTextStyles.h6(colors))),
         if (_showViewAll)
           TextButton(
             onPressed: onViewAll,
@@ -42,10 +40,9 @@ class AppSectionHeader extends StatelessWidget {
             ),
             child: Text(
               LocaleKeys.viewAll.tr,
-              style: AppTextStyles.caption(colors).copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.caption(
+                colors,
+              ).copyWith(color: colors.primary, fontWeight: FontWeight.w600),
             ),
           ),
       ],

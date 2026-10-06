@@ -91,8 +91,8 @@ class GoalFilterBar extends StatelessWidget {
               // Categories
               _CategoryChip(
                 label: LocaleKeys.filterAll.tr,
-                selected: controller.selectedCategoryId == null && controller.statusFilter == null,
-                onTap: controller.clearFilters,
+                selected: controller.selectedCategoryId == null,
+                onTap: () => controller.selectCategory(null),
               ),
               ...controller.categories
                   .where((category) => controller.folderCount(category.id) > 0)
@@ -147,7 +147,9 @@ class _StatusPill extends StatelessWidget {
               vertical: AppSpacing.xs + 2,
             ),
             decoration: BoxDecoration(
-              color: selected ? activeColor.withValues(alpha: 0.16) : colors.card,
+              color: selected
+                  ? activeColor.withValues(alpha: 0.16)
+                  : colors.card,
               borderRadius: BorderRadius.circular(AppRadius.full),
               border: Border.all(
                 color: selected ? activeColor : colors.border,
@@ -264,7 +266,9 @@ class _CategoryChip extends StatelessWidget {
                   Icon(
                     icon,
                     size: 13,
-                    color: selected ? colors.onPrimary : (accentColor ?? colors.textSecondary),
+                    color: selected
+                        ? colors.onPrimary
+                        : (accentColor ?? colors.textSecondary),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                 ],

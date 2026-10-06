@@ -10,7 +10,6 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
-import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/controllers/profile_controller.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
@@ -18,30 +17,26 @@ import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
 class NameIntroDialog extends StatefulWidget {
   const NameIntroDialog({super.key});
 
-  static Future<void> showIfNeeded({bool force = false}) {
-    if (!Get.isRegistered<ProfileController>()) return Future.value();
+  static bool _open = false;
+
+  static Future<void> showIfNeeded() async {
+    if (_open || !Get.isRegistered<ProfileController>()) return;
     final profile = Get.find<ProfileController>();
-    if (profile.hasName) return Future.value();
-    if (!force) {
-      if (profile.introShown) return Future.value();
-      if (Get.isRegistered<AuthController>()) {
-        final auth = Get.find<AuthController>();
-        final authName = auth.user?.displayName;
-        if (authName != null && authName.trim().isNotEmpty) {
-          profile.saveName(authName.trim());
-          return Future.value();
-        }
-      }
-    }
-    profile.markIntroShown();
+    if (!profile.isSynced) await profile.syncFromRemote();
+    if (!profile.needsName) return;
     final palette = Get.isRegistered<ThemeController>()
         ? Get.find<ThemeController>().palette
         : AppColors.light;
-    return Get.dialog<void>(
-      const NameIntroDialog(),
-      barrierDismissible: false,
-      barrierColor: palette.textPrimary.withValues(alpha: 0.45),
-    );
+    _open = true;
+    try {
+      await Get.dialog<void>(
+        const PopScope(canPop: false, child: NameIntroDialog()),
+        barrierDismissible: false,
+        barrierColor: palette.textPrimary.withValues(alpha: 0.45),
+      );
+    } finally {
+      _open = false;
+    }
   }
 
   @override
@@ -128,6 +123,12 @@ class _NameIntroDialogState extends State<NameIntroDialog> {
                         style: AppTextStyles.body2(colors),
                         textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        LocaleKeys.askNameLocked.tr,
+                        style: AppTextStyles.caption(colors),
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: AppSpacing.lg),
                       AppTextField(
                         controller: _controller,
@@ -137,16 +138,11 @@ class _NameIntroDialogState extends State<NameIntroDialog> {
                         onSubmitted: (_) => _submit(),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      AppButton(
-                        label: LocaleKeys.saveName.tr,
-                        onPressed: _submit,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      TextButton(
-                        onPressed: _close,
-                        child: Text(
-                          LocaleKeys.maybeLater.tr,
-                          style: AppTextStyles.caption(colors),
+                      GetBuilder<ProfileController>(
+                        id: 'profile',
+                        builder: (profile) => AppButton(
+                          label: LocaleKeys.saveName.tr,
+                          onPressed: profile.isSaving ? null : _submit,
                         ),
                       ),
                     ],
@@ -163,8 +159,9 @@ class _NameIntroDialogState extends State<NameIntroDialog> {
   Future<void> _submit() async {
     final name = _controller.text.trim();
     if (name.isEmpty) return;
-    await Get.find<ProfileController>().saveName(name);
-    _close();
+    final profile = Get.find<ProfileController>();
+    await profile.saveName(name);
+    if (profile.hasName) _close();
   }
 
   void _close() {

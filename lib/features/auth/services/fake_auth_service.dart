@@ -1,31 +1,23 @@
-import 'dart:async';
-
 import '../models/app_user.dart';
 import 'i_auth_service.dart';
 
 class FakeAuthService implements IAuthService {
   FakeAuthService([AppUser? initialUser])
-      : _user = initialUser ??
-            const AppUser(
-              uid: 'local-dev-uid',
-              isAnonymous: false,
-              email: 'user@example.com',
-            );
+    : _user =
+          initialUser ??
+          const AppUser(
+            uid: 'local-dev-uid',
+            isAnonymous: false,
+            email: 'user@example.com',
+          );
 
   AppUser? _user;
-  final _controller = StreamController<AppUser?>.broadcast();
 
   @override
   AppUser? get currentUser => _user;
 
   @override
-  Stream<AppUser?> get authStateChanges {
-    return _controller.stream;
-  }
-
-  void _notify() {
-    _controller.add(_user);
-  }
+  Future<AppUser?> restoreSession() async => _user;
 
   @override
   Future<AppUser> ensureAnonymousSession() async {
@@ -76,11 +68,7 @@ class FakeAuthService implements IAuthService {
   }
 
   @override
-  Future<AppUser> registerWithEmail(
-    String email,
-    String password, {
-    String? displayName,
-  }) async {
+  Future<AppUser> registerWithEmail(String email, String password) async {
     _user = AppUser(
       uid: _user?.uid ?? 'new-uid',
       isAnonymous: false,
@@ -88,9 +76,8 @@ class FakeAuthService implements IAuthService {
       hasApple: _user?.hasApple ?? false,
       hasPassword: true,
       email: email.trim(),
-      displayName: displayName ?? _user?.displayName,
+      displayName: _user?.displayName,
     );
-    _notify();
     return _user!;
   }
 
@@ -100,6 +87,5 @@ class FakeAuthService implements IAuthService {
   @override
   Future<void> signOut() async {
     _user = null;
-    _notify();
   }
 }

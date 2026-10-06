@@ -25,8 +25,22 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
-  Stream<AppUser?> get authStateChanges =>
-      _auth.authStateChanges().map((user) => user == null ? null : _map(user));
+  Future<AppUser?> restoreSession() async {
+    User? user;
+    try {
+      user = await _auth.authStateChanges().first.timeout(
+        const Duration(seconds: 4),
+      );
+    } catch (_) {
+      user = _auth.currentUser;
+    }
+    user ??= _auth.currentUser;
+    if (user == null) return null;
+    try {
+      await user.getIdToken();
+    } catch (_) {}
+    return _map(user);
+  }
 
   @override
   Future<AppUser> ensureAnonymousSession() async {
@@ -84,11 +98,7 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
-  Future<AppUser> registerWithEmail(
-    String email,
-    String password, {
-    String? displayName,
-  }) async {
+  Future<AppUser> registerWithEmail(String email, String password) async {
     final cleanEmail = email.trim();
     final current = _auth.currentUser;
 
@@ -99,11 +109,7 @@ class FirebaseAuthService implements IAuthService {
       );
       try {
         final linked = await current.linkWithCredential(credential);
-        final user = _requireUser(linked.user);
-        if (displayName != null && displayName.trim().isNotEmpty) {
-          await user.updateDisplayName(displayName.trim());
-        }
-        return _map(user);
+        return _map(_requireUser(linked.user));
       } on FirebaseAuthException catch (error) {
         if (!_shouldSwitchAccount(error.code)) {
           throw AppFailure(error.message ?? error.code);
@@ -116,11 +122,7 @@ class FirebaseAuthService implements IAuthService {
         email: cleanEmail,
         password: password,
       );
-      final user = _requireUser(result.user);
-      if (displayName != null && displayName.trim().isNotEmpty) {
-        await user.updateDisplayName(displayName.trim());
-      }
-      return _map(user);
+      return _map(_requireUser(result.user));
     } on FirebaseAuthException catch (error) {
       throw AppFailure(error.message ?? error.code);
     }

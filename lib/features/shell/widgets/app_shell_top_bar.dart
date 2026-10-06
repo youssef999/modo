@@ -5,11 +5,11 @@ import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
-import 'package:life_daily_app/core/theme/app_text_styles.dart';
-import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
-import 'package:life_daily_app/features/shell/widgets/app_area_switcher.dart';
-import 'package:life_daily_app/features/shell/widgets/shell_area_style.dart';
+import 'package:life_daily_app/features/shell/widgets/shell_page_title.dart';
+import 'package:life_daily_app/shared/widgets/branding/modo_brand.dart';
 
+/// Mobile shell header: brand row, then the open page's title.
+/// Area switching lives in the floating bottom bar.
 class AppShellTopBar extends StatelessWidget {
   const AppShellTopBar({super.key});
 
@@ -19,7 +19,16 @@ class AppShellTopBar extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.card,
-        border: Border(bottom: BorderSide(color: colors.border)),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(AppRadius.lg),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.5),
+            blurRadius: AppSpacing.md,
+            offset: const Offset(0, AppSpacing.xs),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -28,67 +37,27 @@ class AppShellTopBar extends StatelessWidget {
           AppSpacing.md,
           AppSpacing.md,
         ),
-        child: GetBuilder<ShellController>(
-          id: 'shell',
-          builder: (controller) {
-            final area = controller.area;
-            final accent = area.accent(colors);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    _MenuButton(
-                      onTap: () => Scaffold.of(context).openDrawer(),
+                _MenuButton(onTap: () => Scaffold.of(context).openDrawer()),
+                const SizedBox(width: AppSpacing.sm),
+                const Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: ModoBrandLockup(
+                      logoSize: AppLogoSize.sm,
+                      showTagline: false,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: accent.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.sm),
-                              child: Icon(
-                                area.icon,
-                                size: AppIconSize.lg,
-                                color: accent,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  area.titleKey.tr,
-                                  style: AppTextStyles.h5(colors),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  area.subtitleKey.tr,
-                                  style: AppTextStyles.caption(colors),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                const AppAreaSwitcher(),
               ],
-            );
-          },
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const ShellPageTitle(),
+          ],
         ),
       ),
     );
@@ -111,6 +80,9 @@ class _MenuButton extends StatelessWidget {
         foregroundColor: colors.textPrimary,
         backgroundColor: colors.surface,
         side: BorderSide(color: colors.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
       ),
       icon: const Icon(Icons.menu_rounded, size: AppIconSize.md),
     );

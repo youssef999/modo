@@ -3,7 +3,9 @@ import '../models/app_user.dart';
 abstract class IAuthService {
   AppUser? get currentUser;
 
-  Stream<AppUser?> get authStateChanges;
+  /// Waits until the persisted session is restored and its ID token is ready,
+  /// so the first Firestore read after sign-in runs as that user.
+  Future<AppUser?> restoreSession();
 
   Future<AppUser> ensureAnonymousSession();
 
@@ -13,11 +15,7 @@ abstract class IAuthService {
 
   Future<AppUser> signInWithEmail(String email, String password);
 
-  Future<AppUser> registerWithEmail(
-    String email,
-    String password, {
-    String? displayName,
-  });
+  Future<AppUser> registerWithEmail(String email, String password);
 
   Future<void> sendPasswordReset(String email);
 

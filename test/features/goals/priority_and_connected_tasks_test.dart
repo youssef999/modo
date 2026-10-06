@@ -12,9 +12,14 @@ import 'package:life_daily_app/features/goals/repositories/i_goal_repository.dar
 
 class _FakeAuthService implements IAuthService {
   @override
-  AppUser? get currentUser => const AppUser(uid: 'test_user', isAnonymous: false, email: 'test@example.com');
+  AppUser? get currentUser => const AppUser(
+    uid: 'test_user',
+    isAnonymous: false,
+    email: 'test@example.com',
+  );
+
   @override
-  Stream<AppUser?> get authStateChanges => Stream.value(currentUser);
+  Future<AppUser?> restoreSession() async => currentUser;
   @override
   Future<AppUser> ensureAnonymousSession() async => currentUser!;
   @override
@@ -22,13 +27,11 @@ class _FakeAuthService implements IAuthService {
   @override
   Future<AppUser> continueWithApple() async => currentUser!;
   @override
-  Future<AppUser> signInWithEmail(String email, String password) async => currentUser!;
+  Future<AppUser> signInWithEmail(String email, String password) async =>
+      currentUser!;
   @override
-  Future<AppUser> registerWithEmail(
-    String email,
-    String password, {
-    String? displayName,
-  }) async => currentUser!;
+  Future<AppUser> registerWithEmail(String email, String password) async =>
+      currentUser!;
   @override
   Future<void> sendPasswordReset(String email) async {}
   @override
@@ -52,7 +55,8 @@ class _FakeGoalRepository implements IGoalRepository {
   @override
   Future<List<GoalModel>> fetch(String ownerId) async => goals;
   @override
-  Future<List<GoalCategory>> fetchCategories(String ownerId) async => categories;
+  Future<List<GoalCategory>> fetchCategories(String ownerId) async =>
+      categories;
   @override
   Future<GoalModel> create({
     required String ownerId,
@@ -80,15 +84,18 @@ class _FakeGoalRepository implements IGoalRepository {
     goals.add(newGoal);
     return newGoal;
   }
+
   @override
   Future<void> update(GoalModel goal) async {
     final idx = goals.indexWhere((g) => g.id == goal.id);
     if (idx != -1) goals[idx] = goal;
   }
+
   @override
   Future<void> delete(String ownerId, String id) async {
     goals.removeWhere((g) => g.id == id);
   }
+
   @override
   Future<GoalCategory> addCategory({
     required String ownerId,
@@ -107,6 +114,7 @@ class _FakeGoalRepository implements IGoalRepository {
     categories.add(cat);
     return cat;
   }
+
   @override
   Future<void> updateCategory(GoalCategory category) async {}
   @override
@@ -134,83 +142,92 @@ void main() {
       expect(AppPriority.fromName('unknown'), AppPriority.medium);
     });
 
-    test('GoalModel and GoalTask Priority serialization and deserialization', () {
-      final now = DateTime(2026, 9, 20);
-      const task = GoalTask(
-        id: 't_notion_1',
-        title: 'Design Notion schema',
-        status: GoalTaskStatus.todo,
-        priority: AppPriority.urgent,
-        goalId: 'goal_project_alpha',
-      );
+    test(
+      'GoalModel and GoalTask Priority serialization and deserialization',
+      () {
+        final now = DateTime(2026, 9, 20);
+        const task = GoalTask(
+          id: 't_notion_1',
+          title: 'Design Notion schema',
+          status: GoalTaskStatus.todo,
+          priority: AppPriority.urgent,
+          goalId: 'goal_project_alpha',
+        );
 
-      final taskMap = task.toMap();
-      expect(taskMap['priority'], 'urgent');
-      expect(taskMap['goalId'], 'goal_project_alpha');
+        final taskMap = task.toMap();
+        expect(taskMap['priority'], 'urgent');
+        expect(taskMap['goalId'], 'goal_project_alpha');
 
-      final deserializedTask = GoalTask.fromMap(taskMap);
-      expect(deserializedTask.id, 't_notion_1');
-      expect(deserializedTask.priority, AppPriority.urgent);
-      expect(deserializedTask.goalId, 'goal_project_alpha');
+        final deserializedTask = GoalTask.fromMap(taskMap);
+        expect(deserializedTask.id, 't_notion_1');
+        expect(deserializedTask.priority, AppPriority.urgent);
+        expect(deserializedTask.goalId, 'goal_project_alpha');
 
-      final goal = GoalModel(
-        id: 'goal_project_alpha',
-        ownerId: 'user1',
-        title: 'Launch The Hatch MVP',
-        details: 'Notion-like project management',
-        kind: GoalKind.once,
-        startsAt: now,
-        dueAt: now,
-        category: 'work',
-        status: GoalStatus.inProgress,
-        priority: AppPriority.high,
-        checkIns: const [],
-        createdAt: now,
-        updatedAt: now,
-        tasks: [task],
-      );
+        final goal = GoalModel(
+          id: 'goal_project_alpha',
+          ownerId: 'user1',
+          title: 'Launch The Hatch MVP',
+          details: 'Notion-like project management',
+          kind: GoalKind.once,
+          startsAt: now,
+          dueAt: now,
+          category: 'work',
+          status: GoalStatus.inProgress,
+          priority: AppPriority.high,
+          checkIns: const [],
+          createdAt: now,
+          updatedAt: now,
+          tasks: [task],
+        );
 
-      final goalMap = goal.toMap();
-      expect(goalMap['priority'], 'high');
+        final goalMap = goal.toMap();
+        expect(goalMap['priority'], 'high');
 
-      final deserializedGoal = GoalModel.fromMap('goal_project_alpha', goalMap);
-      expect(deserializedGoal.priority, AppPriority.high);
-      expect(deserializedGoal.tasks.length, 1);
-      expect(deserializedGoal.tasks.first.priority, AppPriority.urgent);
-      expect(deserializedGoal.tasks.first.goalId, 'goal_project_alpha');
-    });
+        final deserializedGoal = GoalModel.fromMap(
+          'goal_project_alpha',
+          goalMap,
+        );
+        expect(deserializedGoal.priority, AppPriority.high);
+        expect(deserializedGoal.tasks.length, 1);
+        expect(deserializedGoal.tasks.first.priority, AppPriority.urgent);
+        expect(deserializedGoal.tasks.first.goalId, 'goal_project_alpha');
+      },
+    );
 
-    test('GoalModel backward compatibility defaults priority to medium and auto-links goalId', () {
-      final now = DateTime(2026, 9, 20);
-      final legacyMap = {
-        'id': 'g_legacy',
-        'ownerId': 'user1',
-        'title': 'Legacy Goal without priority',
-        'details': '',
-        'kind': 'once',
-        'startsAt': now.toIso8601String(),
-        'dueAt': now.toIso8601String(),
-        'category': 'course',
-        'status': 'inProgress',
-        'checkIns': <String>[],
-        'createdAt': now.toIso8601String(),
-        'updatedAt': now.toIso8601String(),
-        'tasks': [
-          {
-            'id': 't_legacy_1',
-            'title': 'Legacy Task without priority or goalId',
-            'status': 'todo',
-            'order': 0,
-          },
-        ],
-      };
+    test(
+      'GoalModel backward compatibility defaults priority to medium and auto-links goalId',
+      () {
+        final now = DateTime(2026, 9, 20);
+        final legacyMap = {
+          'id': 'g_legacy',
+          'ownerId': 'user1',
+          'title': 'Legacy Goal without priority',
+          'details': '',
+          'kind': 'once',
+          'startsAt': now.toIso8601String(),
+          'dueAt': now.toIso8601String(),
+          'category': 'course',
+          'status': 'inProgress',
+          'checkIns': <String>[],
+          'createdAt': now.toIso8601String(),
+          'updatedAt': now.toIso8601String(),
+          'tasks': [
+            {
+              'id': 't_legacy_1',
+              'title': 'Legacy Task without priority or goalId',
+              'status': 'todo',
+              'order': 0,
+            },
+          ],
+        };
 
-      final parsed = GoalModel.fromMap('g_legacy', legacyMap);
-      expect(parsed.priority, AppPriority.medium);
-      expect(parsed.tasks.first.priority, AppPriority.medium);
-      // Connected tasks automatically inherit parent goalId
-      expect(parsed.tasks.first.goalId, 'g_legacy');
-    });
+        final parsed = GoalModel.fromMap('g_legacy', legacyMap);
+        expect(parsed.priority, AppPriority.medium);
+        expect(parsed.tasks.first.priority, AppPriority.medium);
+        // Connected tasks automatically inherit parent goalId
+        expect(parsed.tasks.first.goalId, 'g_legacy');
+      },
+    );
 
     test('GoalsController Priority & Reassigning Task between Goals', () async {
       Get.reset();
@@ -275,7 +292,10 @@ void main() {
 
       // 3. Change Task Priority
       await controller.changeTaskPriority(updatedG1, task.id, AppPriority.high);
-      expect(controller.goalById('g_1')?.tasks.first.priority, AppPriority.high);
+      expect(
+        controller.goalById('g_1')?.tasks.first.priority,
+        AppPriority.high,
+      );
 
       // 4. Reassign Task to another Goal (Goal Beta)
       await controller.reassignTaskToGoal(

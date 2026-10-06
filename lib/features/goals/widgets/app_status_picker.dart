@@ -23,32 +23,21 @@ class StatusVisualConfig {
   final IconData icon;
   final String label;
 
-  static StatusVisualConfig forGoalStatus(GoalStatus status, AppPalette colors) {
+  static StatusVisualConfig forGoalStatus(
+    GoalStatus status,
+    AppPalette colors,
+  ) {
     return switch (status) {
-      GoalStatus.notStarted => StatusVisualConfig(
-          color: colors.textSecondary,
-          bgColor: colors.textSecondary.withValues(alpha: 0.12),
-          icon: Icons.radio_button_unchecked,
-          label: LocaleKeys.statusNotStarted.tr,
-        ),
-      GoalStatus.inProgress => StatusVisualConfig(
-          color: colors.info,
-          bgColor: colors.info.withValues(alpha: 0.14),
-          icon: Icons.timelapse_rounded,
-          label: LocaleKeys.statusInProgress.tr,
-        ),
-      GoalStatus.done => StatusVisualConfig(
-          color: colors.success,
-          bgColor: colors.success.withValues(alpha: 0.14),
-          icon: Icons.check_circle_rounded,
-          label: LocaleKeys.statusDone.tr,
-        ),
+      GoalStatus.notStarted => forTaskStatus(GoalTaskStatus.todo, colors),
+      GoalStatus.inProgress => forTaskStatus(GoalTaskStatus.inProgress, colors),
+      GoalStatus.pending => forTaskStatus(GoalTaskStatus.pending, colors),
+      GoalStatus.done => forTaskStatus(GoalTaskStatus.done, colors),
       GoalStatus.archived => StatusVisualConfig(
-          color: colors.textDisabled,
-          bgColor: colors.textDisabled.withValues(alpha: 0.12),
-          icon: Icons.inventory_2_outlined,
-          label: LocaleKeys.statusArchived.tr,
-        ),
+        color: colors.textDisabled,
+        bgColor: colors.textDisabled.withValues(alpha: 0.12),
+        icon: Icons.inventory_2_outlined,
+        label: LocaleKeys.statusArchived.tr,
+      ),
     };
   }
 
@@ -58,23 +47,29 @@ class StatusVisualConfig {
   ) {
     return switch (status) {
       GoalTaskStatus.todo => StatusVisualConfig(
-          color: colors.textSecondary,
-          bgColor: colors.textSecondary.withValues(alpha: 0.12),
-          icon: Icons.radio_button_unchecked,
-          label: LocaleKeys.taskStatusTodo.tr,
-        ),
+        color: colors.textSecondary,
+        bgColor: colors.textSecondary.withValues(alpha: 0.12),
+        icon: Icons.radio_button_unchecked,
+        label: LocaleKeys.taskStatusTodo.tr,
+      ),
+      GoalTaskStatus.pending => StatusVisualConfig(
+        color: colors.warning,
+        bgColor: colors.warning.withValues(alpha: 0.14),
+        icon: Icons.hourglass_top_rounded,
+        label: LocaleKeys.taskStatusPending.tr,
+      ),
       GoalTaskStatus.inProgress => StatusVisualConfig(
-          color: colors.info,
-          bgColor: colors.info.withValues(alpha: 0.14),
-          icon: Icons.timelapse_rounded,
-          label: LocaleKeys.taskStatusInProgress.tr,
-        ),
+        color: colors.info,
+        bgColor: colors.info.withValues(alpha: 0.14),
+        icon: Icons.timelapse_rounded,
+        label: LocaleKeys.taskStatusInProgress.tr,
+      ),
       GoalTaskStatus.done => StatusVisualConfig(
-          color: colors.success,
-          bgColor: colors.success.withValues(alpha: 0.14),
-          icon: Icons.check_circle_rounded,
-          label: LocaleKeys.taskStatusDone.tr,
-        ),
+        color: colors.success,
+        bgColor: colors.success.withValues(alpha: 0.14),
+        icon: Icons.check_circle_rounded,
+        label: LocaleKeys.taskStatusDone.tr,
+      ),
     };
   }
 }
@@ -399,15 +394,27 @@ class _GoalStatusList extends StatelessWidget {
         _StatusOptionTile<GoalStatus>(
           value: GoalStatus.notStarted,
           selected: currentStatus == GoalStatus.notStarted,
-          config: StatusVisualConfig.forGoalStatus(GoalStatus.notStarted, colors),
+          config: StatusVisualConfig.forGoalStatus(
+            GoalStatus.notStarted,
+            colors,
+          ),
           onTap: () => Navigator.of(context).pop(GoalStatus.notStarted),
+        ),
+        _StatusOptionTile<GoalStatus>(
+          value: GoalStatus.pending,
+          selected: currentStatus == GoalStatus.pending,
+          config: StatusVisualConfig.forGoalStatus(GoalStatus.pending, colors),
+          onTap: () => Navigator.of(context).pop(GoalStatus.pending),
         ),
         const SizedBox(height: AppSpacing.xs),
         _SectionHeader(label: LocaleKeys.statusSectionInProgress.tr),
         _StatusOptionTile<GoalStatus>(
           value: GoalStatus.inProgress,
           selected: currentStatus == GoalStatus.inProgress,
-          config: StatusVisualConfig.forGoalStatus(GoalStatus.inProgress, colors),
+          config: StatusVisualConfig.forGoalStatus(
+            GoalStatus.inProgress,
+            colors,
+          ),
           onTap: () => Navigator.of(context).pop(GoalStatus.inProgress),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -449,12 +456,24 @@ class _TaskStatusList extends StatelessWidget {
           config: StatusVisualConfig.forTaskStatus(GoalTaskStatus.todo, colors),
           onTap: () => Navigator.of(context).pop(GoalTaskStatus.todo),
         ),
+        _StatusOptionTile<GoalTaskStatus>(
+          value: GoalTaskStatus.pending,
+          selected: currentStatus == GoalTaskStatus.pending,
+          config: StatusVisualConfig.forTaskStatus(
+            GoalTaskStatus.pending,
+            colors,
+          ),
+          onTap: () => Navigator.of(context).pop(GoalTaskStatus.pending),
+        ),
         const SizedBox(height: AppSpacing.xs),
         _SectionHeader(label: LocaleKeys.statusSectionInProgress.tr),
         _StatusOptionTile<GoalTaskStatus>(
           value: GoalTaskStatus.inProgress,
           selected: currentStatus == GoalTaskStatus.inProgress,
-          config: StatusVisualConfig.forTaskStatus(GoalTaskStatus.inProgress, colors),
+          config: StatusVisualConfig.forTaskStatus(
+            GoalTaskStatus.inProgress,
+            colors,
+          ),
           onTap: () => Navigator.of(context).pop(GoalTaskStatus.inProgress),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -575,7 +594,9 @@ class _StatusOptionTileState<T> extends State<_StatusOptionTile<T>> {
                 child: Text(
                   widget.config.label,
                   style: AppTextStyles.body2(colors).copyWith(
-                    color: isSelected ? widget.config.color : colors.textPrimary,
+                    color: isSelected
+                        ? widget.config.color
+                        : colors.textPrimary,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),

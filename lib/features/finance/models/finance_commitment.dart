@@ -74,9 +74,11 @@ class FinanceCommitment {
       isPaid: map['isPaid'] as bool? ?? false,
       categoryId: map['categoryId'] as String? ?? '',
       note: map['note'] as String? ?? '',
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(map['createdAt'] as String? ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
+      updatedAt:
+          DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
           DateTime.now(),
     );
   }

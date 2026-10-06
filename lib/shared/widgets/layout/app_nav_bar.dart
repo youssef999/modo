@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
+import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 
+/// App bar for pushed pages: back button, bold title with an accent
+/// underline, and optional actions.
 class AppNavBar extends StatelessWidget implements PreferredSizeWidget {
   const AppNavBar({
     super.key,
@@ -19,7 +22,7 @@ class AppNavBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
   final bool showBack;
 
-  static const double height = 44;
+  static const double height = 64;
 
   @override
   Size get preferredSize => const Size.fromHeight(height);
@@ -30,36 +33,58 @@ class AppNavBar extends StatelessWidget implements PreferredSizeWidget {
     final canPop = Navigator.canPop(context);
     final showLeading = showBack && (onBack != null || canPop);
 
-    return AppBar(
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      backgroundColor: colors.background,
-      surfaceTintColor: colors.background,
-      centerTitle: true,
-      automaticallyImplyLeading: false,
-      toolbarHeight: height,
-      leadingWidth: AppSpacing.xxl + AppSpacing.sm,
-      title: Text(
-        title,
-        style: AppTextStyles.h6(colors).copyWith(fontWeight: FontWeight.w600),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.card,
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.45),
+            blurRadius: AppSpacing.md,
+            offset: const Offset(0, AppSpacing.xs),
+          ),
+        ],
       ),
-      leading: showLeading
-          ? Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: _BackButton(onPressed: onBack ?? Get.back),
-            )
-          : null,
-      actions: [
-        ...?actions,
-        if (actions == null || actions!.isEmpty)
-          const SizedBox(width: AppSpacing.xxl + AppSpacing.sm),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(0.5),
-        child: Divider(
-          height: 0.5,
-          thickness: 0.5,
-          color: colors.border.withValues(alpha: 0.75),
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: height,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Row(
+              children: [
+                if (showLeading) ...[
+                  _BackButton(onPressed: onBack ?? Get.back),
+                  const SizedBox(width: AppSpacing.md),
+                ],
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.h5(
+                          colors,
+                        ).copyWith(fontWeight: FontWeight.w800, height: 1.2),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Container(
+                        width: AppSpacing.lg,
+                        height: AppSpacing.xs,
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ...?actions,
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -75,18 +100,17 @@ class _BackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appPalette;
     return Material(
-      color: colors.card.withValues(alpha: 0),
+      color: colors.primary.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(AppSpacing.lg),
-        child: Padding(
-          padding: const EdgeInsetsDirectional.only(
-            start: AppSpacing.md,
-            end: AppSpacing.sm,
-          ),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: SizedBox(
+          width: AppSpacing.xl + AppSpacing.sm,
+          height: AppSpacing.xl + AppSpacing.sm,
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            size: AppIconSize.md,
+            size: AppIconSize.sm,
             color: colors.primary,
           ),
         ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
@@ -13,6 +12,7 @@ import 'package:life_daily_app/features/finance/models/finance_category_role.dar
 import 'package:life_daily_app/features/finance/models/finance_entry.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_numpad.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_segmented.dart';
+import 'package:life_daily_app/shared/widgets/inputs/app_category_sheet.dart';
 import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_scaffold.dart';
 
@@ -41,7 +41,7 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
     super.initState();
     final controller = Get.find<FinanceController>();
     _isIncome = widget.kind != FinanceKind.expense;
-    _date = DateTime.now();
+    _date = controller.defaultEntryDate();
     _categoryId = _defaultCategoryId(controller);
     _noteFocus.addListener(() {
       setState(() => _noteFocused = _noteFocus.hasFocus);
@@ -100,8 +100,7 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
               Expanded(
                 child: GridView.builder(
                   itemCount: categories.length + 1,
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 100,
                     mainAxisSpacing: AppSpacing.sm,
                     crossAxisSpacing: AppSpacing.sm,
@@ -111,12 +110,17 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
                     if (index == categories.length) {
                       return _AddCategoryCell(
                         onTap: () async {
-                          final id = await AppNavigator.toFinanceCategory(
+                          final draft = await AppCategorySheet.show(context);
+                          if (draft == null) return;
+                          final id = await controller.addCategory(
+                            draft.name,
                             role: _isIncome
                                 ? FinanceCategoryRole.income
                                 : FinanceCategoryRole.spend,
+                            iconKey: draft.iconKey,
+                            select: false,
                           );
-                          if (id == null || id.isEmpty) return;
+                          if (id == null || !mounted) return;
                           setState(() => _categoryId = id);
                         },
                       );
@@ -155,8 +159,9 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
                           ),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
-                            MaterialLocalizations.of(context)
-                                .formatMediumDate(_date),
+                            MaterialLocalizations.of(
+                              context,
+                            ).formatMediumDate(_date),
                             style: AppTextStyles.caption(colors).copyWith(
                               color: colors.primary,
                               fontWeight: FontWeight.w600,
@@ -178,9 +183,7 @@ class _FinanceEntryPageState extends State<FinanceEntryPage> {
                 label: LocaleKeys.financeNote.tr,
                 focusNode: _noteFocus,
               ),
-              SizedBox(
-                height: _noteFocused ? AppSpacing.lg : AppSpacing.sm,
-              ),
+              SizedBox(height: _noteFocused ? AppSpacing.lg : AppSpacing.sm),
               if (!_noteFocused)
                 FinanceNumpad(
                   dateLabel: financeTodayLabel(_date),

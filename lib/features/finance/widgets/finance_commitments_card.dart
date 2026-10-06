@@ -60,7 +60,8 @@ class FinanceCommitmentsCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => _showAddCommitmentDialog(context, controller),
+                    onPressed: () =>
+                        _showAddCommitmentDialog(context, controller),
                     icon: Icon(
                       Icons.add_rounded,
                       color: colors.primary,
@@ -91,7 +92,9 @@ class FinanceCommitmentsCard extends StatelessWidget {
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              FinanceMonthSnapshot.format(snapshot.safeLiquidity),
+                              FinanceMonthSnapshot.format(
+                                snapshot.safeLiquidity,
+                              ),
                               style: AppTextStyles.h5(colors).copyWith(
                                 color: snapshot.safeLiquidity >= 0
                                     ? colors.success
@@ -101,11 +104,7 @@ class FinanceCommitmentsCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        height: 36,
-                        width: 1,
-                        color: colors.border,
-                      ),
+                      Container(height: 36, width: 1, color: colors.border),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
@@ -117,10 +116,12 @@ class FinanceCommitmentsCard extends StatelessWidget {
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              FinanceMonthSnapshot.format(snapshot.unpaidCommitments),
-                              style: AppTextStyles.h6(colors).copyWith(
-                                color: colors.warning,
+                              FinanceMonthSnapshot.format(
+                                snapshot.unpaidCommitments,
                               ),
+                              style: AppTextStyles.h6(
+                                colors,
+                              ).copyWith(color: colors.warning),
                             ),
                           ],
                         ),
@@ -146,7 +147,8 @@ class FinanceCommitmentsCard extends StatelessWidget {
                     for (final commitment in commitments)
                       _CommitmentTile(
                         commitment: commitment,
-                        onToggle: () => controller.toggleCommitmentPaid(commitment),
+                        onToggle: () =>
+                            controller.toggleCommitmentPaid(commitment),
                         onDelete: () => controller.deleteCommitment(commitment),
                       ),
                   ],
@@ -347,7 +349,9 @@ class _AddCommitmentDialogState extends State<_AddCommitmentDialog> {
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: LocaleKeys.financeAmount.tr,
                     isDense: true,
@@ -360,7 +364,11 @@ class _AddCommitmentDialogState extends State<_AddCommitmentDialog> {
                 InkWell(
                   onTap: () async {
                     final now = DateTime.now();
-                    final currentDay = (int.tryParse(_dueDayController.text) ?? 1).clamp(1, 28);
+                    final currentDay =
+                        (int.tryParse(_dueDayController.text) ?? 1).clamp(
+                          1,
+                          28,
+                        );
                     final picked = await showDatePicker(
                       context: context,
                       initialDate: DateTime(now.year, now.month, currentDay),
@@ -386,29 +394,26 @@ class _AddCommitmentDialogState extends State<_AddCommitmentDialog> {
                     ),
                   ),
                 ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _noteController,
-                decoration: InputDecoration(
-                  labelText: LocaleKeys.financeNote.tr,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: _noteController,
+                  decoration: InputDecoration(
+                    labelText: LocaleKeys.financeNote.tr,
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton(
-                label: LocaleKeys.financeAdd.tr,
-                onPressed: _save,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                AppButton(label: LocaleKeys.financeAdd.tr, onPressed: _save),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _save() {
     final title = _titleController.text.trim();

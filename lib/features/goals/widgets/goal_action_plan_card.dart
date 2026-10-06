@@ -141,13 +141,15 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
                       ),
                       TaskStatusBadge(
                         status: _selectedTaskStatus,
-                        onChanged: (s) => setState(() => _selectedTaskStatus = s),
+                        onChanged: (s) =>
+                            setState(() => _selectedTaskStatus = s),
                       ),
                       if (currentGoal.members.isNotEmpty)
                         _AssigneePickerBadge(
                           members: currentGoal.members,
                           selectedMember: _selectedAssignee,
-                          onChanged: (m) => setState(() => _selectedAssignee = m),
+                          onChanged: (m) =>
+                              setState(() => _selectedAssignee = m),
                         ),
                     ],
                   ),
@@ -212,12 +214,8 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
                       task.id,
                       newStatus,
                     ),
-                    onPriorityChanged: (newPriority) =>
-                        controller.changeTaskPriority(
-                      currentGoal,
-                      task.id,
-                      newPriority,
-                    ),
+                    onPriorityChanged: (newPriority) => controller
+                        .changeTaskPriority(currentGoal, task.id, newPriority),
                     onAssign: () => _showAssignMemberDialog(
                       context,
                       controller,
@@ -272,13 +270,22 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                ),
                 leading: CircleAvatar(
                   radius: 16,
                   backgroundColor: colors.border,
-                  child: Icon(Icons.person_off_outlined, size: 16, color: colors.textSecondary),
+                  child: Icon(
+                    Icons.person_off_outlined,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
                 ),
-                title: Text(LocaleKeys.unassigned.tr, style: AppTextStyles.body2(colors)),
+                title: Text(
+                  LocaleKeys.unassigned.tr,
+                  style: AppTextStyles.body2(colors),
+                ),
                 trailing: task.assigneeId == null
                     ? Icon(Icons.check_rounded, color: colors.primary, size: 18)
                     : null,
@@ -295,7 +302,9 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
                     final m = members[index];
                     final isSelected = task.assigneeId == m.uid;
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                       leading: CircleAvatar(
                         radius: 16,
                         backgroundColor: colors.primary.withValues(alpha: 0.15),
@@ -312,9 +321,16 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
                         m.displayName.isNotEmpty ? m.displayName : m.email,
                         style: AppTextStyles.body2(colors),
                       ),
-                      subtitle: Text(m.email, style: AppTextStyles.caption(colors)),
+                      subtitle: Text(
+                        m.email,
+                        style: AppTextStyles.caption(colors),
+                      ),
                       trailing: isSelected
-                          ? Icon(Icons.check_rounded, color: colors.primary, size: 18)
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: colors.primary,
+                              size: 18,
+                            )
                           : null,
                       onTap: () => Navigator.of(ctx).pop(m),
                     );
@@ -340,8 +356,9 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
     GoalModel currentGoal,
     GoalTask task,
   ) async {
-    final otherGoals =
-        controller.goals.where((g) => g.id != currentGoal.id).toList();
+    final otherGoals = controller.goals
+        .where((g) => g.id != currentGoal.id)
+        .toList();
     final colors = context.appPalette;
 
     if (otherGoals.isEmpty) {
@@ -397,11 +414,11 @@ class _GoalActionPlanCardState extends State<GoalActionPlanCard> {
                         horizontal: AppSpacing.sm,
                         vertical: 2,
                       ),
-                      leading: Icon(
-                        Icons.flag_outlined,
-                        color: colors.primary,
+                      leading: Icon(Icons.flag_outlined, color: colors.primary),
+                      title: Text(
+                        controller.goalTitle(g),
+                        style: AppTextStyles.body2(colors),
                       ),
-                      title: Text(g.title, style: AppTextStyles.body2(colors)),
                       trailing: const Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 14,
@@ -501,37 +518,17 @@ class _TaskItemTile extends StatelessWidget {
                   ),
                 ),
               ),
-              if (members.length > 1 || task.assigneeId != null) ...[
+              if (task.assigneeId != null) ...[
                 const SizedBox(width: AppSpacing.xs),
                 Tooltip(
-                  message: task.assigneeId != null
-                      ? (task.assigneeName?.isNotEmpty == true
-                          ? '${task.assigneeName} (${task.assigneeEmail})'
-                          : task.assigneeEmail ?? LocaleKeys.assignedTo.tr)
-                      : LocaleKeys.assignTo.tr,
+                  message: task.assigneeEmail ?? LocaleKeys.assignedTo.tr,
                   child: InkWell(
                     onTap: onAssign,
                     borderRadius: BorderRadius.circular(12),
-                    child: task.assigneeId != null
-                        ? AssigneeAvatar(
-                            initials: task.assigneeInitials,
-                            size: 22,
-                          )
-                        : Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: colors.border,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.person_add_alt_1_outlined,
-                              size: 13,
-                              color: colors.textSecondary,
-                            ),
-                          ),
+                    child: AssigneeAvatar(
+                      initials: task.assigneeInitials,
+                      size: 22,
+                    ),
                   ),
                 ),
               ],
@@ -612,9 +609,9 @@ class _TaskItemTile extends StatelessWidget {
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           LocaleKeys.delete.tr,
-                          style: AppTextStyles.body2(colors).copyWith(
-                            color: colors.error,
-                          ),
+                          style: AppTextStyles.body2(
+                            colors,
+                          ).copyWith(color: colors.error),
                         ),
                       ],
                     ),
@@ -651,9 +648,16 @@ class _AssigneePickerBadge extends StatelessWidget {
           value: null,
           child: Row(
             children: [
-              Icon(Icons.person_off_outlined, size: 16, color: colors.textSecondary),
+              Icon(
+                Icons.person_off_outlined,
+                size: 16,
+                color: colors.textSecondary,
+              ),
               const SizedBox(width: AppSpacing.xs),
-              Text(LocaleKeys.unassigned.tr, style: AppTextStyles.body2(colors)),
+              Text(
+                LocaleKeys.unassigned.tr,
+                style: AppTextStyles.body2(colors),
+              ),
             ],
           ),
         ),
@@ -706,14 +710,16 @@ class _AssigneePickerBadge extends StatelessWidget {
                   ? Icons.person_rounded
                   : Icons.person_add_alt_rounded,
               size: 14,
-              color: selectedMember != null ? colors.primary : colors.textSecondary,
+              color: selectedMember != null
+                  ? colors.primary
+                  : colors.textSecondary,
             ),
             const SizedBox(width: 4),
             Text(
               selectedMember != null
                   ? (selectedMember!.displayName.isNotEmpty
-                      ? selectedMember!.displayName
-                      : selectedMember!.initials)
+                        ? selectedMember!.displayName
+                        : selectedMember!.initials)
                   : LocaleKeys.assignTo.tr,
               style: TextStyle(
                 fontSize: 12,

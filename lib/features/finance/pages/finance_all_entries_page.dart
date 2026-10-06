@@ -58,9 +58,9 @@ class FinanceAllEntriesPage extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                           child: Text(
-                            MaterialLocalizations.of(context).formatMediumDate(
-                              day,
-                            ),
+                            MaterialLocalizations.of(
+                              context,
+                            ).formatMediumDate(day),
                             style: AppTextStyles.h6(context.appPalette),
                           ),
                         ),

@@ -10,7 +10,10 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData forId(AppThemeId id) {
-    return _build(AppColors.forId(id), id.isDark ? Brightness.dark : Brightness.light);
+    return _build(
+      AppColors.forId(id),
+      id.isDark ? Brightness.dark : Brightness.light,
+    );
   }
 
   static ThemeData get light => forId(AppThemeId.light);

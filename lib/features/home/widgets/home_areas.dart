@@ -13,9 +13,16 @@ class HomeAreas extends StatelessWidget {
     return Column(
       children: [
         HomeAreaTile(
-          icon: Icons.flag_outlined,
-          title: LocaleKeys.goalsTitle.tr,
-          subtitle: LocaleKeys.goalsSubtitle.tr,
+          icon: Icons.calendar_today_rounded,
+          title: LocaleKeys.todayTitle.tr,
+          subtitle: LocaleKeys.myDay.tr,
+          onTap: () => Get.find<ShellController>().selectArea(ShellArea.today),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        HomeAreaTile(
+          icon: Icons.task_alt_rounded,
+          title: LocaleKeys.navTasks.tr,
+          subtitle: LocaleKeys.allMyTasks.tr,
           onTap: () => Get.find<ShellController>().selectArea(ShellArea.goals),
         ),
         const SizedBox(height: AppSpacing.sm),

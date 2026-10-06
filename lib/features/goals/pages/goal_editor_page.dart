@@ -87,61 +87,61 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                _SelectedCategory(
-                  categoryId: _categoryId,
-                  onChange: () => setState(() => _pickingCategory = true),
+                    _SelectedCategory(
+                      categoryId: _categoryId,
+                      onChange: () => setState(() => _pickingCategory = true),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _StatusTile(
+                      status: _status,
+                      onChanged: (s) => setState(() => _status = s),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _PriorityTile(
+                      priority: _priority,
+                      onChanged: (p) => setState(() => _priority = p),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      controller: _title,
+                      label: LocaleKeys.goalName.tr,
+                      autofocus: true,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    AppTextField(
+                      controller: _details,
+                      label: LocaleKeys.goalDetails.tr,
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _KindToggle(value: _kind, onChanged: _setKind),
+                    const SizedBox(height: AppSpacing.md),
+                    if (_kind == GoalKind.habit) ...[
+                      _DateTile(
+                        label: LocaleKeys.goalStartDate.tr,
+                        value: _startsAt,
+                        onTap: () => _pickDate(isStart: true),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _DateTile(
+                        label: LocaleKeys.goalEndDate.tr,
+                        value: _dueAt,
+                        onTap: () => _pickDate(isStart: false),
+                      ),
+                    ] else
+                      _DateTile(
+                        label: LocaleKeys.goalDate.tr,
+                        value: _dueAt,
+                        onTap: () => _pickDate(isStart: false),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _StatusTile(
-                  status: _status,
-                  onChanged: (s) => setState(() => _status = s),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _PriorityTile(
-                  priority: _priority,
-                  onChanged: (p) => setState(() => _priority = p),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppTextField(
-                  controller: _title,
-                  label: LocaleKeys.goalName.tr,
-                  autofocus: true,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppTextField(
-                  controller: _details,
-                  label: LocaleKeys.goalDetails.tr,
-                  maxLines: 4,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _KindToggle(value: _kind, onChanged: _setKind),
-                const SizedBox(height: AppSpacing.md),
-                if (_kind == GoalKind.habit) ...[
-                  _DateTile(
-                    label: LocaleKeys.goalStartDate.tr,
-                    value: _startsAt,
-                    onTap: () => _pickDate(isStart: true),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _DateTile(
-                    label: LocaleKeys.goalEndDate.tr,
-                    value: _dueAt,
-                    onTap: () => _pickDate(isStart: false),
-                  ),
-                ] else
-                  _DateTile(
-                    label: LocaleKeys.goalDate.tr,
-                    value: _dueAt,
-                    onTap: () => _pickDate(isStart: false),
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
-  },
-);
   }
 
   void _setKind(GoalKind kind) {
@@ -251,94 +251,94 @@ class _CategoryStep extends StatelessWidget {
                       itemCount: controller.categories.length + 1,
                       gridDelegate:
                           const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 120,
-                        mainAxisSpacing: AppSpacing.md,
-                        crossAxisSpacing: AppSpacing.md,
-                        childAspectRatio: 0.82,
-                      ),
-                  itemBuilder: (context, index) {
-                    if (index == controller.categories.length) {
-                      return GestureDetector(
-                        onTap: () async {
-                          final id = await AppNavigator.toGoalCategory();
-                          if (id == null || id.isEmpty) return;
-                          onSelect(id);
-                        },
-                        child: Column(
-                          children: [
-                            Container(
-                              width: AppSpacing.xxl + AppSpacing.sm,
-                              height: AppSpacing.xxl + AppSpacing.sm,
-                              decoration: BoxDecoration(
-                                color: colors.surface,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: colors.primary),
-                              ),
-                              child: Icon(
-                                Icons.add_rounded,
-                                color: colors.primary,
-                                size: AppIconSize.lg,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              LocaleKeys.addCategory.tr,
-                              maxLines: 2,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.caption(colors),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    final category = controller.categories[index];
-                    final selected = category.id == selectedId;
-                    final tint = category.color(colors);
-                    return GestureDetector(
-                      onTap: () => onSelect(category.id),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: AppSpacing.xxl + AppSpacing.sm,
-                            height: AppSpacing.xxl + AppSpacing.sm,
-                            decoration: BoxDecoration(
-                              color: colors.surface,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: selected
-                                    ? colors.primary
-                                    : colors.border,
-                                width: selected ? 2 : 1,
-                              ),
-                            ),
-                            child: Icon(
-                              category.icon,
-                              color: tint,
-                              size: AppIconSize.lg,
-                            ),
+                            maxCrossAxisExtent: 120,
+                            mainAxisSpacing: AppSpacing.md,
+                            crossAxisSpacing: AppSpacing.md,
+                            childAspectRatio: 0.82,
                           ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            controller.categoryLabel(category),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.caption(colors),
+                      itemBuilder: (context, index) {
+                        if (index == controller.categories.length) {
+                          return GestureDetector(
+                            onTap: () async {
+                              final id = await AppNavigator.toGoalCategory();
+                              if (id == null || id.isEmpty) return;
+                              onSelect(id);
+                            },
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: AppSpacing.xxl + AppSpacing.sm,
+                                  height: AppSpacing.xxl + AppSpacing.sm,
+                                  decoration: BoxDecoration(
+                                    color: colors.surface,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: colors.primary),
+                                  ),
+                                  child: Icon(
+                                    Icons.add_rounded,
+                                    color: colors.primary,
+                                    size: AppIconSize.lg,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  LocaleKeys.addCategory.tr,
+                                  maxLines: 2,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.caption(colors),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        final category = controller.categories[index];
+                        final selected = category.id == selectedId;
+                        final tint = category.color(colors);
+                        return GestureDetector(
+                          onTap: () => onSelect(category.id),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: AppSpacing.xxl + AppSpacing.sm,
+                                height: AppSpacing.xxl + AppSpacing.sm,
+                                decoration: BoxDecoration(
+                                  color: colors.surface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: selected
+                                        ? colors.primary
+                                        : colors.border,
+                                    width: selected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Icon(
+                                  category.icon,
+                                  color: tint,
+                                  size: AppIconSize.lg,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                controller.categoryLabel(category),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.caption(colors),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            );
-          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _SelectedCategory extends StatelessWidget {
@@ -528,17 +528,13 @@ class _StatusTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              GoalStatusBadge(
-                status: status,
-                onChanged: onChanged,
-              ),
+              GoalStatusBadge(status: status, onChanged: onChanged),
               const Spacer(),
               Text(
                 LocaleKeys.changeStatus.tr,
-                style: AppTextStyles.caption(colors).copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.caption(
+                  colors,
+                ).copyWith(color: colors.primary, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -560,7 +556,10 @@ class _PriorityTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(LocaleKeys.selectPriority.tr, style: AppTextStyles.caption(colors)),
+        Text(
+          LocaleKeys.selectPriority.tr,
+          style: AppTextStyles.caption(colors),
+        ),
         const SizedBox(height: AppSpacing.xs),
         Container(
           width: double.infinity,
@@ -575,17 +574,13 @@ class _PriorityTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              GoalPriorityBadge(
-                priority: priority,
-                onChanged: onChanged,
-              ),
+              GoalPriorityBadge(priority: priority, onChanged: onChanged),
               const Spacer(),
               Text(
                 LocaleKeys.changePriority.tr,
-                style: AppTextStyles.caption(colors).copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.caption(
+                  colors,
+                ).copyWith(color: colors.primary, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -594,4 +589,3 @@ class _PriorityTile extends StatelessWidget {
     );
   }
 }
-

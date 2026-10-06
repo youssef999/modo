@@ -10,9 +10,7 @@ import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
-import 'package:life_daily_app/features/auth/controllers/profile_controller.dart';
-import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
-import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
+import 'package:life_daily_app/shared/widgets/branding/modo_brand.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
 
@@ -27,7 +25,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   _AuthMode _mode = _AuthMode.signIn;
-  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _localError;
@@ -40,18 +37,12 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _onSuccess() async {
-    await Get.find<ProfileController>().syncFromRemote();
-    await Get.find<GoalsController>().load();
-    if (Get.isRegistered<FinanceController>()) {
-      await Get.find<FinanceController>().load();
-    }
+  void _onSuccess() {
     AppNavigator.offAllHome();
   }
 
@@ -151,38 +142,17 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildHeader(AppPalette colors) {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          child: Icon(
-            Icons.track_changes_rounded,
-            size: AppIconSize.xl,
-            color: colors.primary,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          LocaleKeys.appName.tr,
-          style: AppTextStyles.h4(colors).copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppSpacing.xs),
+        const ModoBrandLockup(logoSize: AppLogoSize.lg, vertical: true),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           switch (_mode) {
             _AuthMode.signIn => LocaleKeys.signInSubtitle.tr,
             _AuthMode.signUp => LocaleKeys.signUpSubtitle.tr,
             _AuthMode.resetPassword => LocaleKeys.resetPasswordSubtitle.tr,
           },
-          style: AppTextStyles.body2(colors).copyWith(
-            color: colors.textSecondary,
-          ),
+          style: AppTextStyles.body2(
+            colors,
+          ).copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ],
@@ -198,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
           busy: auth.isBusy,
           onTap: () async {
             final ok = await auth.continueWithGoogle();
-            if (ok && mounted) await _onSuccess();
+            if (ok && mounted) _onSuccess();
           },
         ),
         if (_showApple) ...[
@@ -206,13 +176,12 @@ class _LoginPageState extends State<LoginPage> {
           AppButton(
             label: LocaleKeys.continueApple.tr,
             variant: AppButtonVariant.secondary,
-            onPressed:
-                auth.isBusy
-                    ? null
-                    : () async {
-                      final ok = await auth.continueWithApple();
-                      if (ok && mounted) await _onSuccess();
-                    },
+            onPressed: auth.isBusy
+                ? null
+                : () async {
+                    final ok = await auth.continueWithApple();
+                    if (ok && mounted) _onSuccess();
+                  },
           ),
         ],
       ],
@@ -240,23 +209,13 @@ class _LoginPageState extends State<LoginPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_mode == _AuthMode.signUp) ...[
-          AppTextField(
-            controller: _nameController,
-            label: LocaleKeys.fullName.tr,
-            keyboardType: TextInputType.name,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
         AppTextField(
           controller: _emailController,
           label: LocaleKeys.email.tr,
           keyboardType: TextInputType.emailAddress,
-          textInputAction:
-              _mode == _AuthMode.resetPassword
-                  ? TextInputAction.done
-                  : TextInputAction.next,
+          textInputAction: _mode == _AuthMode.resetPassword
+              ? TextInputAction.done
+              : TextInputAction.next,
         ),
         if (_mode != _AuthMode.resetPassword) ...[
           const SizedBox(height: AppSpacing.sm),
@@ -279,9 +238,9 @@ class _LoginPageState extends State<LoginPage> {
             ),
             child: Text(
               _localError ?? auth.errorMessage!,
-              style: AppTextStyles.caption(colors).copyWith(
-                color: colors.error,
-              ),
+              style: AppTextStyles.caption(
+                colors,
+              ).copyWith(color: colors.error),
             ),
           ),
         ],
@@ -295,9 +254,9 @@ class _LoginPageState extends State<LoginPage> {
             ),
             child: Text(
               auth.infoMessage!,
-              style: AppTextStyles.caption(colors).copyWith(
-                color: colors.success,
-              ),
+              style: AppTextStyles.caption(
+                colors,
+              ).copyWith(color: colors.success),
             ),
           ),
         ],
@@ -323,61 +282,56 @@ class _LoginPageState extends State<LoginPage> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           TextButton(
-            onPressed:
-                () => setState(() {
-                  _mode = _AuthMode.resetPassword;
-                  _localError = null;
-                }),
+            onPressed: () => setState(() {
+              _mode = _AuthMode.resetPassword;
+              _localError = null;
+            }),
             child: Text(
               LocaleKeys.forgotPassword.tr,
-              style: AppTextStyles.caption(colors).copyWith(
-                color: colors.textSecondary,
-              ),
+              style: AppTextStyles.caption(
+                colors,
+              ).copyWith(color: colors.textSecondary),
             ),
           ),
           TextButton(
-            onPressed:
-                () => setState(() {
-                  _mode = _AuthMode.signUp;
-                  _localError = null;
-                }),
+            onPressed: () => setState(() {
+              _mode = _AuthMode.signUp;
+              _localError = null;
+            }),
             child: Text(
               LocaleKeys.signUp.tr,
-              style: AppTextStyles.caption(colors).copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.caption(
+                colors,
+              ).copyWith(color: colors.primary, fontWeight: FontWeight.w700),
             ),
           ),
         ],
       ),
       _AuthMode.signUp => Center(
         child: TextButton(
-          onPressed:
-              () => setState(() {
-                _mode = _AuthMode.signIn;
-                _localError = null;
-              }),
+          onPressed: () => setState(() {
+            _mode = _AuthMode.signIn;
+            _localError = null;
+          }),
           child: Text(
             LocaleKeys.alreadyHaveAccount.tr,
-            style: AppTextStyles.caption(colors).copyWith(
-              color: colors.primary,
-            ),
+            style: AppTextStyles.caption(
+              colors,
+            ).copyWith(color: colors.primary),
           ),
         ),
       ),
       _AuthMode.resetPassword => Center(
         child: TextButton(
-          onPressed:
-              () => setState(() {
-                _mode = _AuthMode.signIn;
-                _localError = null;
-              }),
+          onPressed: () => setState(() {
+            _mode = _AuthMode.signIn;
+            _localError = null;
+          }),
           child: Text(
             LocaleKeys.signIn.tr,
-            style: AppTextStyles.caption(colors).copyWith(
-              color: colors.primary,
-            ),
+            style: AppTextStyles.caption(
+              colors,
+            ).copyWith(color: colors.primary),
           ),
         ),
       ),
@@ -387,12 +341,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _submit(AuthController auth) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final name = _nameController.text.trim();
-
-    if (_mode == _AuthMode.signUp && name.isEmpty) {
-      setState(() => _localError = LocaleKeys.nameRequired.tr);
-      return;
-    }
 
     if (email.isEmpty || !email.contains('@')) {
       setState(() => _localError = LocaleKeys.invalidEmail.tr);
@@ -410,14 +358,14 @@ class _LoginPageState extends State<LoginPage> {
     if (_mode == _AuthMode.signIn) {
       ok = await auth.signInWithEmail(email, password);
     } else if (_mode == _AuthMode.signUp) {
-      ok = await auth.registerWithEmail(email, password, displayName: name);
+      ok = await auth.registerWithEmail(email, password);
     } else {
       ok = await auth.sendPasswordReset(email);
     }
 
     if (!mounted) return;
     if (ok && _mode != _AuthMode.resetPassword) {
-      await _onSuccess();
+      _onSuccess();
     }
   }
 }
@@ -463,9 +411,9 @@ class _GoogleButton extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 LocaleKeys.continueGoogle.tr,
-                style: AppTextStyles.body2(colors).copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.body2(
+                  colors,
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),

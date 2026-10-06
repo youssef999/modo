@@ -46,10 +46,7 @@ class FinanceComparisonSection extends StatelessWidget {
 }
 
 class _ComparisonCard extends StatelessWidget {
-  const _ComparisonCard({
-    required this.title,
-    required this.comparison,
-  });
+  const _ComparisonCard({required this.title, required this.comparison});
 
   final String title;
   final FinancePeriodComparison comparison;
@@ -150,7 +147,9 @@ class _Row extends StatelessWidget {
               children: [
                 if (_showIcon()) ...[
                   Icon(
-                    _isUp() ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                    _isUp()
+                        ? Icons.arrow_upward_rounded
+                        : Icons.arrow_downward_rounded,
                     size: AppIconSize.sm,
                     color: deltaColor,
                   ),
@@ -161,10 +160,9 @@ class _Row extends StatelessWidget {
                     delta,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption(colors).copyWith(
-                      color: deltaColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.caption(
+                      colors,
+                    ).copyWith(color: deltaColor, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],

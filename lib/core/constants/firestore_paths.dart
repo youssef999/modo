@@ -32,8 +32,7 @@ class FirestorePaths {
 
   static String userWorkFolders(String uid) => '$users/$uid/$workFolders';
 
-  static String userJournalFolders(String uid) =>
-      '$users/$uid/$journalFolders';
+  static String userJournalFolders(String uid) => '$users/$uid/$journalFolders';
 
   // Team Collaboration
   static const String goalInvites = 'goal_invites';
@@ -43,8 +42,7 @@ class FirestorePaths {
 
   static String goalDoc(String goalId) => '$goals/$goalId';
 
-  static String goalMembersCol(String goalId) =>
-      '$goals/$goalId/$goalMembers';
+  static String goalMembersCol(String goalId) => '$goals/$goalId/$goalMembers';
 
   static String goalMemberDoc(String goalId, String uid) =>
       '$goals/$goalId/$goalMembers/$uid';

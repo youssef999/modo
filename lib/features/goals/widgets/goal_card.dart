@@ -79,13 +79,14 @@ class GoalCard extends StatelessWidget {
                           ),
                           GoalPriorityBadge(
                             priority: goal.priority,
-                            onChanged: (newPriority) =>
-                                controller.changeGoalPriority(goal, newPriority),
+                            onChanged: (newPriority) => controller
+                                .changeGoalPriority(goal, newPriority),
                             compact: true,
                           ),
                           GoalStatusBadge(
                             status: goal.status,
-                            onChanged: (newStatus) => controller.changeGoalStatus(goal, newStatus),
+                            onChanged: (newStatus) =>
+                                controller.changeGoalStatus(goal, newStatus),
                             compact: true,
                           ),
                           GoalSuccessIndicator(goal: goal, compact: true),

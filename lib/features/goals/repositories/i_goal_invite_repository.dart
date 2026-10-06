@@ -25,10 +25,4 @@ abstract class IGoalInviteRepository {
 
   /// Declines an invite.
   Future<void> declineInvite(String inviteId);
-
-  /// Fetches all pending invites sent for goal [goalId].
-  Future<List<GoalInvite>> fetchGoalPendingInvites(String goalId);
-
-  /// Cancels or revokes an invite that was previously sent.
-  Future<void> cancelInvite(String inviteId);
 }

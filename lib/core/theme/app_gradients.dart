@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
 import 'app_palette.dart';
 
 class AppGradients {
@@ -28,4 +29,11 @@ class AppGradients {
       colors: [colors.secondaryLight, colors.secondary],
     );
   }
+
+  /// Blue to cyan to green, following the Modo logo ring.
+  static const LinearGradient brand = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [AppColors.brandBlue, AppColors.brandCyan, AppColors.brandGreen],
+  );
 }

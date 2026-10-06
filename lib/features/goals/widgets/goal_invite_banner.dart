@@ -136,26 +136,22 @@ class _InviteTileState extends State<_InviteTile> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        LocaleKeys.inviteFrom.trParams(
-                          {
-                            'name': widget.invite.inviterName.trim().isNotEmpty
-                                ? widget.invite.inviterName
-                                : widget.invite.inviterEmail,
-                          },
-                        ),
-                        style: AppTextStyles.caption(colors).copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        LocaleKeys.inviteFrom.trParams({
+                          'name': widget.invite.inviterEmail,
+                        }),
+                        style: AppTextStyles.caption(
+                          colors,
+                        ).copyWith(fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        LocaleKeys.inviteToGoal.trParams(
-                          {'goal': widget.invite.goalTitle},
-                        ),
-                        style: AppTextStyles.caption(colors).copyWith(
-                          color: colors.textSecondary,
-                        ),
+                        LocaleKeys.inviteToGoal.trParams({
+                          'goal': widget.invite.goalTitle,
+                        }),
+                        style: AppTextStyles.caption(
+                          colors,
+                        ).copyWith(color: colors.textSecondary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -168,8 +164,9 @@ class _InviteTileState extends State<_InviteTile> {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 _error!,
-                style: AppTextStyles.caption(colors)
-                    .copyWith(color: colors.error),
+                style: AppTextStyles.caption(
+                  colors,
+                ).copyWith(color: colors.error),
               ),
             ],
             const SizedBox(height: AppSpacing.sm),

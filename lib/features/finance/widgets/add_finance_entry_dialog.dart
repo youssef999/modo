@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
+import 'package:life_daily_app/core/theme/app_icons.dart';
+import 'package:life_daily_app/core/theme/app_palette.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
+import 'package:life_daily_app/features/finance/models/finance_category.dart';
+import 'package:life_daily_app/features/finance/models/finance_category_role.dart';
 import 'package:life_daily_app/features/finance/models/finance_entry.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_segmented.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
+import 'package:life_daily_app/shared/widgets/inputs/app_category_sheet.dart';
 
 class AddFinanceEntryDialog extends StatefulWidget {
-  const AddFinanceEntryDialog({super.key, this.initialKind = FinanceKind.expense});
+  const AddFinanceEntryDialog({
+    super.key,
+    this.initialKind = FinanceKind.expense,
+  });
 
   final FinanceKind initialKind;
 
@@ -40,8 +48,8 @@ class _AddFinanceEntryDialogState extends State<AddFinanceEntryDialog> {
   void initState() {
     super.initState();
     _isIncome = widget.initialKind != FinanceKind.expense;
-    _date = DateTime.now();
     final controller = Get.find<FinanceController>();
+    _date = controller.defaultEntryDate();
     _categoryId = _resolveDefaultCategory(controller);
   }
 
@@ -119,8 +127,9 @@ class _AddFinanceEntryDialogState extends State<AddFinanceEntryDialog> {
                     TextField(
                       controller: _amountController,
                       autofocus: true,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       style: AppTextStyles.h4(colors),
                       decoration: InputDecoration(
                         labelText: LocaleKeys.financeAmount.tr,
@@ -137,40 +146,35 @@ class _AddFinanceEntryDialogState extends State<AddFinanceEntryDialog> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    if (categories.isNotEmpty)
-                      DropdownButtonFormField<String>(
-                        initialValue: _categoryId,
-                        items: [
-                          for (final cat in categories)
-                            DropdownMenuItem(
-                              value: cat.id,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    cat.icon,
-                                    size: 20,
-                                    color: cat.color(colors),
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Text(
-                                    controller.categoryLabel(cat),
-                                    style: AppTextStyles.body2(colors),
-                                  ),
-                                ],
-                              ),
+                    Row(
+                      children: [
+                        if (categories.isNotEmpty)
+                          Expanded(
+                            child: _categoryDropdown(
+                              categories,
+                              controller,
+                              colors,
                             ),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) setState(() => _categoryId = val);
-                        },
-                        decoration: InputDecoration(
-                          labelText: LocaleKeys.goalCategory.tr,
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          )
+                        else
+                          Expanded(
+                            child: Text(
+                              LocaleKeys.addCategory.tr,
+                              style: AppTextStyles.body2(colors),
+                            ),
+                          ),
+                        const SizedBox(width: AppSpacing.xs),
+                        IconButton.filledTonal(
+                          tooltip: LocaleKeys.addCategory.tr,
+                          onPressed: () => _addCategory(controller),
+                          icon: Icon(
+                            Icons.add_rounded,
+                            size: AppIconSize.md,
+                            color: colors.primary,
                           ),
                         ),
-                      ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     InkWell(
                       onTap: _pickDate,
@@ -202,11 +206,12 @@ class _AddFinanceEntryDialogState extends State<AddFinanceEntryDialog> {
                                     style: AppTextStyles.caption(colors),
                                   ),
                                   Text(
-                                    MaterialLocalizations.of(context)
-                                        .formatMediumDate(_date),
-                                    style: AppTextStyles.body1(colors).copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    MaterialLocalizations.of(
+                                      context,
+                                    ).formatMediumDate(_date),
+                                    style: AppTextStyles.body1(
+                                      colors,
+                                    ).copyWith(fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -218,8 +223,9 @@ class _AddFinanceEntryDialogState extends State<AddFinanceEntryDialog> {
                               ),
                               decoration: BoxDecoration(
                                 color: colors.primary.withValues(alpha: 0.1),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: Text(
                                 LocaleKeys.editGoal.tr,
@@ -259,6 +265,60 @@ class _AddFinanceEntryDialogState extends State<AddFinanceEntryDialog> {
         ),
       ),
     );
+  }
+
+  Widget _categoryDropdown(
+    List<FinanceCategory> categories,
+    FinanceController controller,
+    AppPalette colors,
+  ) {
+    return DropdownButtonFormField<String>(
+      key: ValueKey(_categoryId),
+      initialValue: _categoryId,
+      isExpanded: true,
+      items: [
+        for (final cat in categories)
+          DropdownMenuItem(
+            value: cat.id,
+            child: Row(
+              children: [
+                Icon(cat.icon, size: AppIconSize.md, color: cat.color(colors)),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    controller.categoryLabel(cat),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.body2(colors),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      onChanged: (val) {
+        if (val != null) setState(() => _categoryId = val);
+      },
+      decoration: InputDecoration(
+        labelText: LocaleKeys.goalCategory.tr,
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addCategory(FinanceController controller) async {
+    final draft = await AppCategorySheet.show(context);
+    if (draft == null) return;
+    final id = await controller.addCategory(
+      draft.name,
+      role: _isIncome ? FinanceCategoryRole.income : FinanceCategoryRole.spend,
+      iconKey: draft.iconKey,
+      select: false,
+    );
+    if (id != null && mounted) setState(() => _categoryId = id);
   }
 
   Future<void> _save() async {

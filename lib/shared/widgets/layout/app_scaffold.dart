@@ -36,13 +36,15 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appPalette;
-    final isDesktop = MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
 
+    final sidePadding = isDesktop && !embed ? AppSpacing.xl : AppSpacing.md;
     final paddedBody = Padding(
       padding: EdgeInsets.fromLTRB(
-        isDesktop ? AppSpacing.xl : AppSpacing.md,
+        sidePadding,
         AppSpacing.sm,
-        isDesktop ? AppSpacing.xl : AppSpacing.md,
+        sidePadding,
         (embed && !isDesktop) ? AppSpacing.navClearance : AppSpacing.md,
       ),
       child: body,
@@ -52,7 +54,11 @@ class AppScaffold extends StatelessWidget {
         ? Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1040),
+              constraints: BoxConstraints(
+                maxWidth: embed
+                    ? AppLayout.wideMaxWidth
+                    : AppLayout.readableMaxWidth,
+              ),
               child: paddedBody,
             ),
           )
@@ -62,7 +68,9 @@ class AppScaffold extends StatelessWidget {
         ? Align(
             alignment: Alignment.center,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 960),
+              constraints: const BoxConstraints(
+                maxWidth: AppLayout.headerMaxWidth,
+              ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.md,
@@ -72,7 +80,9 @@ class AppScaffold extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Expanded(child: Text(title!, style: AppTextStyles.h5(colors))),
+                    Expanded(
+                      child: Text(title!, style: AppTextStyles.h5(colors)),
+                    ),
                     ...?actions,
                   ],
                 ),
@@ -131,11 +141,14 @@ class _BottomChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (bottomBar == null && !showBanner) return const SizedBox.shrink();
-    final isDesktop = MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= AppBreakpoints.desktop;
     final constrainedBottomBar = isDesktop && bottomBar != null
         ? Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 960),
+              constraints: const BoxConstraints(
+                maxWidth: AppLayout.headerMaxWidth,
+              ),
               child: bottomBar,
             ),
           )

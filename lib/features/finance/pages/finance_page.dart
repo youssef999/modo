@@ -5,7 +5,7 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_charts_section.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_entry_list.dart';
-import 'package:life_daily_app/features/finance/widgets/finance_month_strip.dart';
+import 'package:life_daily_app/features/finance/widgets/finance_period_strip.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_reports_section.dart';
 import 'package:life_daily_app/features/finance/widgets/finance_segmented.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
@@ -45,14 +45,21 @@ class FinancePage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
-                  const FinanceMonthStrip(),
-                  const SizedBox(height: AppSpacing.md),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                    ),
+                    child: FinancePeriodStrip(allowDay: section == 0),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Expanded(
                     child: switch (section) {
                       1 => const SingleChildScrollView(
+                        padding: FinanceEntryList.padding,
                         child: FinanceChartsSection(),
                       ),
                       2 => const SingleChildScrollView(
+                        padding: FinanceEntryList.padding,
                         child: FinanceReportsSection(),
                       ),
                       _ => const FinanceEntryList(),

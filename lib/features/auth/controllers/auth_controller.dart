@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/ads/interstitial_ad_service.dart';
 import 'package:life_daily_app/core/errors/app_failure.dart';
@@ -7,9 +5,9 @@ import 'package:life_daily_app/features/finance/controllers/finance_controller.d
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 
 import '../models/app_user.dart';
+import 'profile_controller.dart';
 import '../services/i_auth_service.dart';
 import '../services/i_user_profile_service.dart';
-import 'profile_controller.dart';
 
 class AuthController extends GetxController {
   AuthController(this._auth, this._profiles);
@@ -22,51 +20,11 @@ class AuthController extends GetxController {
   bool isBootstrapping = true;
   String? errorMessage;
   String? infoMessage;
-  StreamSubscription<AppUser?>? _authSubscription;
 
   @override
   void onInit() {
     super.onInit();
-    final existing = _auth.currentUser;
-    if (existing != null && !existing.isAnonymous) {
-      user = existing;
-    }
-    _authSubscription = _auth.authStateChanges.listen((newUser) async {
-      if (newUser != null && !newUser.isAnonymous) {
-        final previousUid = user?.uid;
-        user = newUser;
-        update(['auth']);
-        if (previousUid != newUser.uid) {
-          try {
-            await _profiles.ensureProfile(newUser);
-          } catch (_) {}
-          if (Get.isRegistered<ProfileController>()) {
-            await Get.find<ProfileController>().syncFromRemote();
-          }
-          if (Get.isRegistered<GoalsController>()) {
-            await Get.find<GoalsController>().onAccountReady();
-          }
-          if (Get.isRegistered<FinanceController>()) {
-            await Get.find<FinanceController>().onAccountReady();
-          }
-        }
-      } else if (newUser == null && user != null) {
-        user = null;
-        update(['auth']);
-        if (Get.isRegistered<GoalsController>()) {
-          Get.find<GoalsController>().load();
-        }
-        if (Get.isRegistered<FinanceController>()) {
-          Get.find<FinanceController>().load();
-        }
-      }
-    });
-  }
-
-  @override
-  void onClose() {
-    _authSubscription?.cancel();
-    super.onClose();
+    user ??= _auth.currentUser;
   }
 
   bool get isBackedUp => user?.isBackedUp ?? false;
@@ -84,19 +42,17 @@ class AuthController extends GetxController {
     errorMessage = null;
     update(['auth']);
     try {
-      final existing = _auth.currentUser;
+      final existing = await _auth.restoreSession();
       if (existing != null && !existing.isAnonymous) {
         user = existing;
         await _profiles.ensureProfile(user!);
-        if (Get.isRegistered<ProfileController>()) {
-          await Get.find<ProfileController>().syncFromRemote();
-        }
         isBootstrapping = false;
         update(['auth']);
         return true;
       }
       // No logged-in user — require login
       user = null;
+      await _clearProfile();
       isBootstrapping = false;
       update(['auth']);
       return false;
@@ -109,10 +65,8 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<bool> continueWithGoogle() => _executeAuth(
-        _auth.continueWithGoogle,
-        showAd: true,
-      );
+  Future<bool> continueWithGoogle() =>
+      _executeAuth(_auth.continueWithGoogle, showAd: true);
 
   Future<bool> continueWithApple() => _executeAuth(_auth.continueWithApple);
 
@@ -123,25 +77,9 @@ class AuthController extends GetxController {
     );
   }
 
-  Future<bool> registerWithEmail(
-    String email,
-    String password, {
-    String? displayName,
-  }) {
+  Future<bool> registerWithEmail(String email, String password) {
     return _executeAuth(
-      () async {
-        final res = await _auth.registerWithEmail(
-          email,
-          password,
-          displayName: displayName,
-        );
-        if (displayName != null && displayName.trim().isNotEmpty) {
-          if (Get.isRegistered<ProfileController>()) {
-            await Get.find<ProfileController>().saveName(displayName.trim());
-          }
-        }
-        return res;
-      },
+      () => _auth.registerWithEmail(email, password),
       showAd: true,
     );
   }
@@ -174,6 +112,7 @@ class AuthController extends GetxController {
     try {
       await _auth.signOut();
       user = null;
+      await _clearProfile();
     } catch (error) {
       errorMessage = _message(error);
     } finally {
@@ -193,16 +132,10 @@ class AuthController extends GetxController {
     update(['auth']);
     try {
       user = await action();
+      user = await _auth.restoreSession() ?? user;
       await _profiles.ensureProfile(user!);
-      if (Get.isRegistered<ProfileController>()) {
-        await Get.find<ProfileController>().syncFromRemote();
-      }
-      if (Get.isRegistered<GoalsController>()) {
-        await Get.find<GoalsController>().onAccountReady();
-      }
-      if (Get.isRegistered<FinanceController>()) {
-        await Get.find<FinanceController>().onAccountReady();
-      }
+      await _onSignedIn(syncData: true);
+      update(['auth']);
       if (showAd && Get.isRegistered<InterstitialAdService>()) {
         await Get.find<InterstitialAdService>().showIfReady();
       }
@@ -213,6 +146,37 @@ class AuthController extends GetxController {
     } finally {
       isBusy = false;
       update(['auth']);
+    }
+  }
+
+  /// Reloads the signed-in account's data into the live controllers.
+  /// The shell calls this on open because controllers created on the login
+  /// route are disposed when that route is replaced.
+  Future<void> refreshAccountData() async {
+    if (!isLoggedIn) return;
+    await _onSignedIn(syncData: false);
+  }
+
+  /// Single place that refreshes everything tied to the signed-in account,
+  /// so every sign-in path updates the UI without a manual refresh.
+  Future<void> _onSignedIn({required bool syncData}) async {
+    await Future.wait([
+      if (Get.isRegistered<ProfileController>())
+        Get.find<ProfileController>().syncFromRemote(),
+      if (Get.isRegistered<GoalsController>())
+        syncData
+            ? Get.find<GoalsController>().onAccountReady()
+            : Get.find<GoalsController>().load(),
+      if (Get.isRegistered<FinanceController>())
+        syncData
+            ? Get.find<FinanceController>().onAccountReady()
+            : Get.find<FinanceController>().load(),
+    ]);
+  }
+
+  Future<void> _clearProfile() async {
+    if (Get.isRegistered<ProfileController>()) {
+      await Get.find<ProfileController>().clear();
     }
   }
 

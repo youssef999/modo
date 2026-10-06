@@ -25,7 +25,7 @@ class CachedFinanceRepository implements IFinanceRepository {
     if (_useCloud) {
       try {
         items = FinanceCategory.withMissingBuiltIns(ownerId, items);
-        await remote!.saveAllCategories(items);
+        await _retryRead(() => remote!.saveAllCategories(items));
         items = await remote!.fetchCategories(ownerId);
         if (items.isEmpty) {
           items = FinanceCategory.builtIns(ownerId);
@@ -64,7 +64,7 @@ class CachedFinanceRepository implements IFinanceRepository {
     if (_useCloud) {
       try {
         await remote!.saveAllEntries(items);
-        items = await remote!.fetchEntries(ownerId);
+        items = await _retryRead(() => remote!.fetchEntries(ownerId));
         await local.replaceEntries(items);
       } catch (_) {}
       return items;
@@ -151,6 +151,17 @@ class CachedFinanceRepository implements IFinanceRepository {
       return remoteItems;
     } catch (_) {
       return const [];
+    }
+  }
+
+  /// Right after sign-in Firestore can still hold the previous token for a
+  /// moment, so one failed call is retried before falling back to the cache.
+  Future<T> _retryRead<T>(Future<T> Function() read) async {
+    try {
+      return await read();
+    } catch (_) {
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      return read();
     }
   }
 

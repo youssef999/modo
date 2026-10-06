@@ -76,10 +76,7 @@ class DynamicTrackerWidget extends StatelessWidget {
             Column(
               children: [
                 for (final tracker in trackers)
-                  _TrackerCard(
-                    goal: currentGoal,
-                    tracker: tracker,
-                  ),
+                  _TrackerCard(goal: currentGoal, tracker: tracker),
               ],
             ),
         ],
@@ -125,9 +122,9 @@ class _TrackerCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       tracker.title,
-                      style: AppTextStyles.body1(colors).copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.body1(
+                        colors,
+                      ).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                   Text(
@@ -162,20 +159,20 @@ class _TrackerCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               switch (tracker.kind) {
                 GoalTrackerKind.numeric => _buildNumericControls(
-                    context,
-                    colors,
-                    controller,
-                  ),
+                  context,
+                  colors,
+                  controller,
+                ),
                 GoalTrackerKind.milestone => _buildMilestoneControls(
-                    context,
-                    colors,
-                    controller,
-                  ),
+                  context,
+                  colors,
+                  controller,
+                ),
                 GoalTrackerKind.streak => _buildStreakControls(
-                    context,
-                    colors,
-                    controller,
-                  ),
+                  context,
+                  colors,
+                  controller,
+                ),
               },
             ],
           ),
@@ -204,10 +201,10 @@ class _TrackerCard extends StatelessWidget {
               icon: const Icon(Icons.remove_circle_outline_rounded, size: 20),
               onPressed: tracker.current > 0
                   ? () => controller.updateTrackerValue(
-                        goal,
-                        tracker.id,
-                        (tracker.current - 1).clamp(0, tracker.target),
-                      )
+                      goal,
+                      tracker.id,
+                      (tracker.current - 1).clamp(0, tracker.target),
+                    )
                   : null,
             ),
             IconButton(
@@ -303,9 +300,9 @@ class _TrackerCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs),
             Text(
               '${tracker.current.round()} / ${tracker.target.round()} ${tracker.unit}',
-              style: AppTextStyles.body2(colors).copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.body2(
+                colors,
+              ).copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -362,59 +359,16 @@ class _AddTrackerDialogState extends State<_AddTrackerDialog> {
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                LocaleKeys.addTracker.tr,
-                style: AppTextStyles.h6(colors),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: LocaleKeys.noteTitle.tr,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<GoalTrackerKind>(
-                initialValue: _kind,
-                decoration: InputDecoration(
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: GoalTrackerKind.numeric,
-                    child: Text(LocaleKeys.trackerKindNumeric.tr),
-                  ),
-                  DropdownMenuItem(
-                    value: GoalTrackerKind.milestone,
-                    child: Text(LocaleKeys.trackerKindMilestone.tr),
-                  ),
-                  DropdownMenuItem(
-                    value: GoalTrackerKind.streak,
-                    child: Text(LocaleKeys.trackerKindStreak.tr),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) setState(() => _kind = val);
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              if (_kind != GoalTrackerKind.milestone) ...[
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(LocaleKeys.addTracker.tr, style: AppTextStyles.h6(colors)),
+                const SizedBox(height: AppSpacing.md),
                 TextField(
-                  controller: _targetController,
-                  keyboardType: TextInputType.number,
+                  controller: _titleController,
                   decoration: InputDecoration(
-                    labelText: LocaleKeys.trackerTarget.tr,
+                    labelText: LocaleKeys.noteTitle.tr,
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -422,42 +376,79 @@ class _AddTrackerDialogState extends State<_AddTrackerDialog> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                TextField(
-                  controller: _unitController,
+                DropdownButtonFormField<GoalTrackerKind>(
+                  initialValue: _kind,
                   decoration: InputDecoration(
-                    labelText: LocaleKeys.trackerUnit.tr,
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                   ),
+                  items: [
+                    DropdownMenuItem(
+                      value: GoalTrackerKind.numeric,
+                      child: Text(LocaleKeys.trackerKindNumeric.tr),
+                    ),
+                    DropdownMenuItem(
+                      value: GoalTrackerKind.milestone,
+                      child: Text(LocaleKeys.trackerKindMilestone.tr),
+                    ),
+                    DropdownMenuItem(
+                      value: GoalTrackerKind.streak,
+                      child: Text(LocaleKeys.trackerKindStreak.tr),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _kind = val);
+                  },
                 ),
-              ] else ...[
-                TextField(
-                  controller: _milestonesController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Milestones (comma-separated)',
-                    hintText: 'Phase 1, Phase 2, Launch',
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                const SizedBox(height: AppSpacing.sm),
+                if (_kind != GoalTrackerKind.milestone) ...[
+                  TextField(
+                    controller: _targetController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: LocaleKeys.trackerTarget.tr,
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _unitController,
+                    decoration: InputDecoration(
+                      labelText: LocaleKeys.trackerUnit.tr,
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: _milestonesController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Milestones (comma-separated)',
+                      hintText: 'Phase 1, Phase 2, Launch',
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.md),
+                AppButton(label: LocaleKeys.save.tr, onPressed: _save),
               ],
-              const SizedBox(height: AppSpacing.md),
-              AppButton(
-                label: LocaleKeys.save.tr,
-                onPressed: _save,
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _save() {
     final title = _titleController.text.trim();

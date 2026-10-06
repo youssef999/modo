@@ -41,8 +41,9 @@ class HomeAnalysisRow extends StatelessWidget {
                           'total': '${goals.totalCount}',
                         }),
                         emphasized: true,
-                        onTap: () => Get.find<ShellController>()
-                            .selectArea(ShellArea.goals),
+                        onTap: () => Get.find<ShellController>().selectArea(
+                          ShellArea.goals,
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),

@@ -7,7 +7,7 @@ import 'i_goal_repository.dart';
 
 class FirestoreGoalRepository implements IGoalRepository {
   FirestoreGoalRepository({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
@@ -199,6 +199,7 @@ class FirestoreGoalRepository implements IGoalRepository {
       'trackers': goal.trackers.map((t) => t.toMap()).toList(),
       'memberIds': memberIds,
       'members': goal.members.map((m) => m.toMap()).toList(),
+      if (goal.isInbox) 'isInbox': true,
       'createdAt': Timestamp.fromDate(goal.createdAt),
       'updatedAt': Timestamp.fromDate(goal.updatedAt),
     };

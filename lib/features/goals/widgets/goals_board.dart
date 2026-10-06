@@ -45,8 +45,8 @@ class GoalsBoard extends StatelessWidget {
         final allItems = doneOnly
             ? controller.doneGoals
             : (controller.statusFilter != null
-                ? controller.filteredGoals
-                : controller.scopedGoals);
+                  ? controller.filteredGoals
+                  : controller.activeGoals);
         final items = previewLimit == null
             ? allItems
             : allItems.take(previewLimit!).toList();
@@ -105,23 +105,19 @@ class GoalsBoard extends StatelessWidget {
           ],
         ];
 
+        final empty = AppEmptyState(
+          icon: Icons.flag_outlined,
+          title: LocaleKeys.goalsEmptyTitle.tr,
+          message: LocaleKeys.goalsEmptyMessage.tr,
+        );
+
         if (shrinkWrap) {
           return ListView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
               ...header,
-              if (items.isEmpty)
-                AppEmptyState(
-                  icon: Icons.flag_outlined,
-                  title: LocaleKeys.goalsEmptyTitle.tr,
-                  message: LocaleKeys.goalsEmptyMessage.tr,
-                )
-              else
-                GoalsItemsView(
-                  items: items,
-                  shrinkWrap: true,
-                ),
+              GoalsItemsView(items: items, shrinkWrap: true, empty: empty),
             ],
           );
         }
@@ -131,13 +127,7 @@ class GoalsBoard extends StatelessWidget {
           children: [
             ...header,
             Expanded(
-              child: items.isEmpty
-                  ? AppEmptyState(
-                      icon: Icons.flag_outlined,
-                      title: LocaleKeys.goalsEmptyTitle.tr,
-                      message: LocaleKeys.goalsEmptyMessage.tr,
-                    )
-                  : GoalsItemsView(items: items),
+              child: GoalsItemsView(items: items, empty: empty),
             ),
           ],
         );

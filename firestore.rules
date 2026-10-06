@@ -13,7 +13,7 @@ service cloud.firestore {
     //   - isAnonymous: bool (required)
     //   - linkedProviders: list<string> (required, max 4, each in [anonymous, google.com, apple.com, password])
     //   - schemaVersion: number (required, immutable, must be 1)
-    //   - displayName: string (required, 0-40)
+    //   - displayName: string (required, 0-40, write-once: may only change from '')
     //
     // Subcollection: users/{userId}/goals/{goalId}
     //   - ownerId: string (required, immutable, == userId)
@@ -301,7 +301,9 @@ service cloud.firestore {
       allow update: if isOwner(userId)
         && isValidUser(request.resource.data)
         && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.schemaVersion == resource.data.schemaVersion;
+        && request.resource.data.schemaVersion == resource.data.schemaVersion
+        && (resource.data.displayName == ''
+          || request.resource.data.displayName == resource.data.displayName);
       allow delete: if false;
 
       match /goals/{goalId} {

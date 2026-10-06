@@ -28,19 +28,17 @@ class FirestoreUserProfileService implements IUserProfileService {
         'isAnonymous': user.isAnonymous,
         'linkedProviders': providers,
         'schemaVersion': 1,
-        'displayName': user.displayName ?? '',
+        'displayName': '',
       });
       return;
     }
 
     final currentName = snapshot.data()?['displayName'] as String? ?? '';
-    final resolvedName =
-        currentName.isNotEmpty ? currentName : (user.displayName ?? '');
     await ref.update({
       'updatedAt': now,
       'isAnonymous': user.isAnonymous,
       'linkedProviders': providers,
-      'displayName': resolvedName,
+      'displayName': currentName,
     });
   }
 
@@ -53,10 +51,17 @@ class FirestoreUserProfileService implements IUserProfileService {
   }
 
   @override
-  Future<void> saveDisplayName(String uid, String name) async {
-    await _db.doc(FirestorePaths.userDoc(uid)).set({
-      'displayName': name.trim(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<bool> claimDisplayName(String uid, String name) {
+    final ref = _db.doc(FirestorePaths.userDoc(uid));
+    return _db.runTransaction<bool>((tx) async {
+      final snapshot = await tx.get(ref);
+      final current = (snapshot.data()?['displayName'] as String? ?? '').trim();
+      if (current.isNotEmpty) return false;
+      tx.update(ref, {
+        'displayName': name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
   }
 }

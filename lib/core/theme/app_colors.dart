@@ -6,6 +6,14 @@ import 'app_theme_id.dart';
 class AppColors {
   AppColors._();
 
+  /// Modo brand colors, sampled from the logo. Same in every theme.
+  static const brandNavy = Color(0xFF162538);
+  static const brandBlue = Color(0xFF1F7FD3);
+  static const brandCyan = Color(0xFF45D9F3);
+  static const brandGreen = Color(0xFF5AF8AD);
+  static const brandTeal = Color(0xFF20CAA6);
+  static const brandOnNavy = Color(0xFFFFFFFF);
+
   static AppPalette forId(AppThemeId id) {
     return switch (id) {
       AppThemeId.light => light,
@@ -45,21 +53,21 @@ class AppColors {
     primaryDark: Color(0xFF06B6D4),
     secondary: Color(0xFF38BDF8),
     secondaryLight: Color(0xFF7DD3FC),
-    background: Color(0xFF082028),
-    surface: Color(0xFF0E2C36),
-    card: Color(0xFF13343F),
-    navBar: Color(0xFF0C2831),
+    background: Color(0xFF181818),
+    surface: Color(0xFF1F1F1F),
+    card: Color(0xFF252526),
+    navBar: Color(0xFF1C1C1C),
     success: Color(0xFF3DDC97),
     warning: Color(0xFFFFC857),
     error: Color(0xFFFF6B6B),
     info: Color(0xFF67E8F9),
-    textPrimary: Color(0xFFF3FBFD),
-    textSecondary: Color(0xFF8AADB6),
-    textDisabled: Color(0xFF4D6B73),
-    border: Color(0xFF1E4550),
-    divider: Color(0xFF18404A),
-    shadow: Color(0x66082028),
-    onPrimary: Color(0xFF082028),
+    textPrimary: Color(0xFFE4E4E4),
+    textSecondary: Color(0xFF9D9D9D),
+    textDisabled: Color(0xFF6E6E6E),
+    border: Color(0xFF2B2B2B),
+    divider: Color(0xFF262626),
+    shadow: Color(0x66000000),
+    onPrimary: Color(0xFF181818),
   );
 
   static const noirRed = AppPalette(

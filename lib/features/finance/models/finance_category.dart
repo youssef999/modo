@@ -114,19 +114,12 @@ class FinanceCategory {
       'gift' ||
       'profit' ||
       'association' ||
-      'other_income' =>
-        FinanceCategoryRole.income,
+      'other_income' => FinanceCategoryRole.income,
       _ => FinanceCategoryRole.spend,
     };
   }
 
-  static const _spendKeys = [
-    'food',
-    'outings',
-    'bills',
-    'health',
-    'transport',
-  ];
+  static const _spendKeys = ['food', 'outings', 'bills', 'health', 'transport'];
   static const _allocateKeys = ['savings', 'invest'];
   static const _incomeKeys = [
     'salary',

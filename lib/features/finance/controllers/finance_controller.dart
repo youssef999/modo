@@ -18,10 +18,14 @@ enum FinancePageTab { charts, reports }
 
 enum FinanceChartKind { expense, income }
 
+/// Money is tracked per day; month is a secondary roll-up view.
+enum FinancePeriod { day, month }
+
 class FinanceController extends GetxController {
   FinanceController(this._repository, [IStorage? storage])
-      : _storage = storage ??
-            (Get.isRegistered<IStorage>() ? Get.find<IStorage>() : null);
+    : _storage =
+          storage ??
+          (Get.isRegistered<IStorage>() ? Get.find<IStorage>() : null);
 
   final IFinanceRepository _repository;
   final IStorage? _storage;
@@ -34,7 +38,93 @@ class FinanceController extends GetxController {
   DateTime month = DateTime(DateTime.now().year, DateTime.now().month);
   FinancePageTab pageTab = FinancePageTab.charts;
   FinanceChartKind chartKind = FinanceChartKind.expense;
+  FinancePeriod period = FinancePeriod.day;
+  DateTime selectedDay = _today();
+  DateTime _dayWindowEnd = _today();
   bool isLoading = true;
+
+  static DateTime _today() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  bool get isDayView => period == FinancePeriod.day;
+
+  bool get isSelectedToday => _sameDay(selectedDay, _today());
+
+  static bool _sameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  /// Seven days ending at the current window end (today by default).
+  List<DateTime> nearbyDays() {
+    return [
+      for (var offset = 6; offset >= 0; offset--)
+        DateTime(
+          _dayWindowEnd.year,
+          _dayWindowEnd.month,
+          _dayWindowEnd.day - offset,
+        ),
+    ];
+  }
+
+  bool get canShiftDaysForward => _dayWindowEnd.isBefore(_today());
+
+  void shiftDays(int direction) {
+    var end = DateTime(
+      _dayWindowEnd.year,
+      _dayWindowEnd.month,
+      _dayWindowEnd.day + 7 * direction,
+    );
+    final today = _today();
+    if (end.isAfter(today)) end = today;
+    _dayWindowEnd = end;
+    final days = nearbyDays();
+    if (!days.any((day) => _sameDay(day, selectedDay))) {
+      _setDay(direction > 0 ? days.first : days.last);
+    }
+    update(['finance']);
+  }
+
+  void selectDay(DateTime value) {
+    _setDay(value);
+    update(['finance']);
+  }
+
+  void goToToday() {
+    _dayWindowEnd = _today();
+    _setDay(_today());
+    update(['finance']);
+  }
+
+  void _setDay(DateTime value) {
+    selectedDay = DateTime(value.year, value.month, value.day);
+    month = DateTime(value.year, value.month);
+    _ensureCarriedPlan();
+  }
+
+  void selectPeriod(FinancePeriod value) {
+    if (period == value) return;
+    period = value;
+    update(['finance']);
+  }
+
+  double get selectedDaySpend => dailySpendForDate(selectedDay);
+
+  double get selectedDayIncome => dailyIncomeForDate(selectedDay);
+
+  /// Defaults new entries to the day being viewed, keeping the current time.
+  DateTime defaultEntryDate() {
+    final now = DateTime.now();
+    if (isSelectedToday) return now;
+    return DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+      now.hour,
+      now.minute,
+    );
+  }
 
   String get ownerId {
     final uid = Get.find<IAuthService>().currentUser?.uid;
@@ -94,6 +184,14 @@ class FinanceController extends GetxController {
     final isCurrentMonth = month.year == now.year && month.month == now.month;
     if (isCurrentMonth) return today;
     return DateTime(month.year, month.month + 1, 0);
+  }
+
+  /// Entries for the selected day in day view, or the month in month view.
+  List<FinanceEntry> get periodEntries {
+    if (!isDayView) return visibleEntries;
+    final items = entriesForDate(selectedDay)
+      ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    return items;
   }
 
   List<FinanceEntry> get visibleEntries {
@@ -156,17 +254,25 @@ class FinanceController extends GetxController {
     load();
   }
 
+  int _loadGeneration = 0;
+
   Future<void> load() async {
+    final generation = ++_loadGeneration;
     isLoading = true;
     update(['finance']);
-    if (ownerId.isEmpty) {
+    final owner = ownerId;
+    if (owner.isEmpty) {
       isLoading = false;
       update(['finance']);
       return;
     }
-    categories = await _repository.fetchCategories(ownerId);
-    entries = await _repository.fetchEntries(ownerId);
-    monthPlans = await _repository.fetchMonthPlans(ownerId);
+    final freshCategories = await _repository.fetchCategories(owner);
+    final freshEntries = await _repository.fetchEntries(owner);
+    final freshPlans = await _repository.fetchMonthPlans(owner);
+    if (generation != _loadGeneration || isClosed) return;
+    categories = freshCategories;
+    entries = freshEntries;
+    monthPlans = freshPlans;
     _loadCommitments();
     await _ensureCarriedPlan();
     isLoading = false;
@@ -184,10 +290,12 @@ class FinanceController extends GetxController {
       if (list is List) {
         commitments = list
             .whereType<Map>()
-            .map((m) => FinanceCommitment.fromMap(
-                  m['id']?.toString() ?? '',
-                  Map<String, dynamic>.from(m),
-                ))
+            .map(
+              (m) => FinanceCommitment.fromMap(
+                m['id']?.toString() ?? '',
+                Map<String, dynamic>.from(m),
+              ),
+            )
             .toList();
       }
     } catch (_) {
@@ -209,7 +317,7 @@ class FinanceController extends GetxController {
   }) async {
     final now = DateTime.now();
     final item = FinanceCommitment(
-      id: now.millisecondsSinceEpoch.toString(),
+      id: '${now.microsecondsSinceEpoch}_${commitments.length}',
       ownerId: ownerId,
       title: title.trim(),
       amount: amount,
@@ -241,6 +349,66 @@ class FinanceController extends GetxController {
     commitments = commitments.where((c) => c.id != item.id).toList();
     await _saveCommitments();
     update(['finance']);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Daily Tracking Hub & Commitments Board
+  // ---------------------------------------------------------------------------
+  List<FinanceEntry> entriesForDate(DateTime date) {
+    return entries.where((e) {
+      return e.occurredAt.year == date.year &&
+          e.occurredAt.month == date.month &&
+          e.occurredAt.day == date.day;
+    }).toList();
+  }
+
+  double dailySpendForDate(DateTime date) {
+    final dayEntries = entriesForDate(date);
+    return dayEntries
+        .where((e) => e.isExpense)
+        .fold<double>(0.0, (sum, e) => sum + e.amount);
+  }
+
+  double dailyIncomeForDate(DateTime date) {
+    final dayEntries = entriesForDate(date);
+    return dayEntries
+        .where((e) => e.isInflow)
+        .fold<double>(0.0, (sum, e) => sum + e.amount);
+  }
+
+  double get dailySafeLimit {
+    final now = DateTime.now();
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final daysLeft = (daysInMonth - now.day + 1).clamp(1, 31);
+    final plan = planFor(DateTime(now.year, now.month));
+    final remainingBudget = plan.spendBudget - snapshot.spend;
+    if (remainingBudget <= 0) {
+      final safeLiq = snapshot.safeLiquidity;
+      return safeLiq > 0 ? (safeLiq / daysLeft) : 0.0;
+    }
+    return remainingBudget / daysLeft;
+  }
+
+  List<FinanceCommitment> commitmentsDueOnDate(DateTime date) {
+    return commitments.where((c) => c.dueDay == date.day).toList();
+  }
+
+  Map<String, List<FinanceCommitment>> get commitmentsByStatus {
+    final todayDay = DateTime.now().day;
+    final dueToday = <FinanceCommitment>[];
+    final upcoming = <FinanceCommitment>[];
+    final paid = <FinanceCommitment>[];
+
+    for (final c in commitments) {
+      if (c.isPaid) {
+        paid.add(c);
+      } else if (c.dueDay == todayDay) {
+        dueToday.add(c);
+      } else {
+        upcoming.add(c);
+      }
+    }
+    return {'dueToday': dueToday, 'upcoming': upcoming, 'paid': paid};
   }
 
   Future<void> onAccountReady() async {
@@ -281,11 +449,12 @@ class FinanceController extends GetxController {
     update(['finance']);
   }
 
+  /// The current month and the months before it, oldest first.
   List<DateTime> nearbyMonths({int count = 7}) {
     final now = DateTime(DateTime.now().year, DateTime.now().month);
     return [
-      for (var offset = 0; offset < count; offset++)
-        DateTime(now.year, now.month + offset),
+      for (var offset = count - 1; offset >= 0; offset--)
+        DateTime(now.year, now.month - offset),
     ];
   }
 
@@ -317,6 +486,7 @@ class FinanceController extends GetxController {
     String name, {
     FinanceCategoryRole role = FinanceCategoryRole.spend,
     String iconKey = 'star',
+    bool select = true,
   }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return null;
@@ -327,7 +497,7 @@ class FinanceController extends GetxController {
       iconKey: iconKey,
     );
     categories = [...categories, category];
-    selectedCategoryId = category.id;
+    if (select) selectedCategoryId = category.id;
     update(['finance']);
     return category.id;
   }

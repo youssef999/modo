@@ -89,8 +89,11 @@ class CategoryIcons {
       'coffee' || 'restaurant' || 'food' || 'nutrition' => palette.warning,
       'phone' || 'music' || 'game' => palette.secondary,
       'school' || 'course' || 'book' => palette.info,
-      'fitness' || 'leaf' || 'health' || 'medicine' || 'healthy_routine' =>
-        palette.success,
+      'fitness' ||
+      'leaf' ||
+      'health' ||
+      'medicine' ||
+      'healthy_routine' => palette.success,
       'pets' || 'baby' || 'family' || 'heart' => palette.secondary,
       'star' || 'bonus' || 'gift' => palette.warning,
       'savings' || 'invest' || 'salary' => palette.primaryDark,

@@ -13,6 +13,7 @@ class AppViewModeToggle extends StatelessWidget {
     this.isGrid = false,
     this.onList,
     this.onGrid,
+    this.modes = AppViewMode.values,
   });
 
   final AppViewMode? mode;
@@ -20,6 +21,23 @@ class AppViewModeToggle extends StatelessWidget {
   final bool isGrid;
   final VoidCallback? onList;
   final VoidCallback? onGrid;
+  final List<AppViewMode> modes;
+
+  static IconData _icon(AppViewMode mode) => switch (mode) {
+    AppViewMode.list => Icons.view_list_rounded,
+    AppViewMode.grid => Icons.grid_view_rounded,
+    AppViewMode.kanban => Icons.view_kanban_rounded,
+  };
+
+  void _select(AppViewMode next) {
+    if (onModeChanged != null) {
+      onModeChanged!(next);
+    } else if (next == AppViewMode.list) {
+      onList?.call();
+    } else if (next == AppViewMode.grid) {
+      onGrid?.call();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,37 +53,12 @@ class AppViewModeToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _ModeButton(
-            icon: Icons.view_list_rounded,
-            selected: currentMode == AppViewMode.list,
-            onTap: () {
-              if (onModeChanged != null) {
-                onModeChanged!(AppViewMode.list);
-              } else if (onList != null) {
-                onList!();
-              }
-            },
-          ),
-          _ModeButton(
-            icon: Icons.grid_view_rounded,
-            selected: currentMode == AppViewMode.grid,
-            onTap: () {
-              if (onModeChanged != null) {
-                onModeChanged!(AppViewMode.grid);
-              } else if (onGrid != null) {
-                onGrid!();
-              }
-            },
-          ),
-          _ModeButton(
-            icon: Icons.view_kanban_rounded,
-            selected: currentMode == AppViewMode.kanban,
-            onTap: () {
-              if (onModeChanged != null) {
-                onModeChanged!(AppViewMode.kanban);
-              }
-            },
-          ),
+          for (final m in modes)
+            _ModeButton(
+              icon: _icon(m),
+              selected: currentMode == m,
+              onTap: () => _select(m),
+            ),
         ],
       ),
     );

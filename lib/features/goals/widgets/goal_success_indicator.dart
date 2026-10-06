@@ -27,8 +27,8 @@ class GoalSuccessIndicator extends StatelessWidget {
     final progressColor = percent >= 100
         ? colors.success
         : percent >= 50
-            ? colors.primary
-            : colors.warning;
+        ? colors.primary
+        : colors.warning;
 
     if (compact) {
       return Row(
@@ -47,10 +47,9 @@ class GoalSuccessIndicator extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Text(
             '$percent%',
-            style: AppTextStyles.caption(colors).copyWith(
-              color: progressColor,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.caption(
+              colors,
+            ).copyWith(color: progressColor, fontWeight: FontWeight.w600),
           ),
         ],
       );
@@ -78,10 +77,9 @@ class GoalSuccessIndicator extends StatelessWidget {
                 ),
                 child: Text(
                   '$percent%',
-                  style: AppTextStyles.body2(colors).copyWith(
-                    color: progressColor,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.body2(
+                    colors,
+                  ).copyWith(color: progressColor, fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -107,8 +105,8 @@ class GoalSuccessIndicator extends StatelessWidget {
                         'total': '${goal.plannedDays}',
                       })
                     : (goal.isDone
-                        ? LocaleKeys.completeGoal.tr
-                        : LocaleKeys.goalsTitle.tr),
+                          ? LocaleKeys.completeGoal.tr
+                          : LocaleKeys.goalsTitle.tr),
                 value: '${goal.progressPercent}%',
                 icon: Icons.check_circle_outline_rounded,
               ),
@@ -154,9 +152,9 @@ class _MetricItem extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,
-          style: AppTextStyles.body2(colors).copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.body2(
+            colors,
+          ).copyWith(fontWeight: FontWeight.w700),
         ),
         Text(
           label,

@@ -6,6 +6,7 @@ import 'goal_tracker.dart';
 enum GoalStatus {
   notStarted,
   inProgress,
+  pending,
   done,
   archived;
 
@@ -34,6 +35,7 @@ class GoalModel {
     this.boardOrder = 0,
     this.members = const [],
     this.memberIds = const [],
+    this.isInbox = false,
   });
 
   final String id;
@@ -59,8 +61,14 @@ class GoalModel {
   /// List of UIDs with access to this goal (for Firestore queries).
   final List<String> memberIds;
 
+  /// The hidden "General tasks" container for tasks without a goal.
+  final bool isInbox;
+
   bool get isArchived => status == GoalStatus.archived;
-  bool get isActive => status == GoalStatus.notStarted || status == GoalStatus.inProgress;
+  bool get isActive =>
+      status == GoalStatus.notStarted ||
+      status == GoalStatus.inProgress ||
+      status == GoalStatus.pending;
 
   bool get isDone => status == GoalStatus.done;
 
@@ -193,6 +201,7 @@ class GoalModel {
     int? boardOrder,
     List<GoalMember>? members,
     List<String>? memberIds,
+    bool? isInbox,
   }) {
     return GoalModel(
       id: id,
@@ -213,6 +222,7 @@ class GoalModel {
       boardOrder: boardOrder ?? this.boardOrder,
       members: members ?? this.members,
       memberIds: memberIds ?? this.memberIds,
+      isInbox: isInbox ?? this.isInbox,
     );
   }
 
@@ -243,6 +253,7 @@ class GoalModel {
       'boardOrder': boardOrder,
       'memberIds': memberIds,
       'members': members.map((m) => m.toMap()).toList(),
+      if (isInbox) 'isInbox': true,
     };
   }
 
@@ -250,6 +261,7 @@ class GoalModel {
     return switch (raw) {
       'done' => GoalStatus.done,
       'inProgress' => GoalStatus.inProgress,
+      'pending' => GoalStatus.pending,
       'notStarted' => GoalStatus.notStarted,
       'archived' => GoalStatus.archived,
       'active' => GoalStatus.notStarted, // backward compat
@@ -282,7 +294,9 @@ class GoalModel {
         if (item is Map<String, dynamic>) {
           trackersList.add(GoalTracker.fromMap(item));
         } else if (item is Map) {
-          trackersList.add(GoalTracker.fromMap(Map<String, dynamic>.from(item)));
+          trackersList.add(
+            GoalTracker.fromMap(Map<String, dynamic>.from(item)),
+          );
         }
       }
     }
@@ -325,6 +339,7 @@ class GoalModel {
       boardOrder: (data['boardOrder'] as num?)?.toInt() ?? 0,
       members: membersList,
       memberIds: memberIdsList,
+      isInbox: data['isInbox'] == true,
     );
   }
 
@@ -342,7 +357,6 @@ class GoalModel {
     }
     return fallback ?? DateTime.now();
   }
-
 
   static DateTime dateOnly(DateTime date) {
     return DateTime(date.year, date.month, date.day);

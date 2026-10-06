@@ -6,9 +6,7 @@ import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
-import 'package:life_daily_app/features/auth/controllers/profile_controller.dart';
-import 'package:life_daily_app/features/finance/controllers/finance_controller.dart';
-import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
+import 'package:life_daily_app/shared/widgets/branding/modo_brand.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 
 class SplashPage extends StatefulWidget {
@@ -33,13 +31,6 @@ class _SplashPageState extends State<SplashPage> {
     if (!mounted) return;
 
     if (hasUser) {
-      // User is logged in — load data and go to home
-      await Get.find<ProfileController>().syncFromRemote();
-      await Get.find<GoalsController>().load();
-      if (Get.isRegistered<FinanceController>()) {
-        await Get.find<FinanceController>().load();
-      }
-      if (!mounted) return;
       AppNavigator.offAllHome();
     } else {
       // No user — mandatory login
@@ -61,36 +52,41 @@ class _SplashPageState extends State<SplashPage> {
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: controller.errorMessage == null
                   ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: AppSpacing.xl,
-                        height: AppSpacing.xl,
-                        child: CircularProgressIndicator(
-                          color: colors.primary,
-                          strokeWidth: 2,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const ModoBrandLockup.hero(),
+                        const SizedBox(height: AppSpacing.xxl),
+                        SizedBox(
+                          width: AppSpacing.xl,
+                          height: AppSpacing.xl,
+                          child: CircularProgressIndicator(
+                            color: colors.primary,
+                            strokeWidth: 2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        LocaleKeys.preparingSpace.tr,
-                        style: AppTextStyles.body2(colors),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  )
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          LocaleKeys.preparingSpace.tr,
+                          style: AppTextStyles.body2(colors),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
                   : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        controller.errorMessage!,
-                        style: AppTextStyles.body2(colors),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppButton(label: LocaleKeys.retry.tr, onPressed: _start),
-                    ],
-                  ),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          controller.errorMessage!,
+                          style: AppTextStyles.body2(colors),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppButton(
+                          label: LocaleKeys.retry.tr,
+                          onPressed: _start,
+                        ),
+                      ],
+                    ),
             ),
           ),
         );

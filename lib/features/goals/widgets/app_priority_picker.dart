@@ -28,35 +28,35 @@ class PriorityVisualConfig {
   ) {
     return switch (priority) {
       AppPriority.urgent => PriorityVisualConfig(
-          color: colors.error,
-          bgColor: colors.error.withValues(alpha: 0.14),
-          icon: Icons.error_outline_rounded,
-          label: LocaleKeys.priorityUrgent.tr,
-        ),
+        color: colors.error,
+        bgColor: colors.error.withValues(alpha: 0.14),
+        icon: Icons.error_outline_rounded,
+        label: LocaleKeys.priorityUrgent.tr,
+      ),
       AppPriority.high => PriorityVisualConfig(
-          color: colors.warning,
-          bgColor: colors.warning.withValues(alpha: 0.14),
-          icon: Icons.keyboard_double_arrow_up_rounded,
-          label: LocaleKeys.priorityHigh.tr,
-        ),
+        color: colors.warning,
+        bgColor: colors.warning.withValues(alpha: 0.14),
+        icon: Icons.keyboard_double_arrow_up_rounded,
+        label: LocaleKeys.priorityHigh.tr,
+      ),
       AppPriority.medium => PriorityVisualConfig(
-          color: colors.info,
-          bgColor: colors.info.withValues(alpha: 0.14),
-          icon: Icons.drag_handle_rounded,
-          label: LocaleKeys.priorityMedium.tr,
-        ),
+        color: colors.info,
+        bgColor: colors.info.withValues(alpha: 0.14),
+        icon: Icons.drag_handle_rounded,
+        label: LocaleKeys.priorityMedium.tr,
+      ),
       AppPriority.low => PriorityVisualConfig(
-          color: const Color(0xFF64748B),
-          bgColor: const Color(0xFF64748B).withValues(alpha: 0.14),
-          icon: Icons.keyboard_arrow_down_rounded,
-          label: LocaleKeys.priorityLow.tr,
-        ),
+        color: const Color(0xFF64748B),
+        bgColor: const Color(0xFF64748B).withValues(alpha: 0.14),
+        icon: Icons.keyboard_arrow_down_rounded,
+        label: LocaleKeys.priorityLow.tr,
+      ),
       AppPriority.none => PriorityVisualConfig(
-          color: colors.textDisabled,
-          bgColor: colors.textDisabled.withValues(alpha: 0.12),
-          icon: Icons.remove_rounded,
-          label: LocaleKeys.priorityNone.tr,
-        ),
+        color: colors.textDisabled,
+        bgColor: colors.textDisabled.withValues(alpha: 0.12),
+        icon: Icons.remove_rounded,
+        label: LocaleKeys.priorityNone.tr,
+      ),
     };
   }
 }
@@ -501,8 +501,9 @@ class _PriorityOptionTileState extends State<_PriorityOptionTile> {
                 child: Text(
                   widget.config.label,
                   style: AppTextStyles.body2(colors).copyWith(
-                    color:
-                        isSelected ? widget.config.color : colors.textPrimary,
+                    color: isSelected
+                        ? widget.config.color
+                        : colors.textPrimary,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),

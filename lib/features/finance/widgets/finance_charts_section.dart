@@ -104,7 +104,9 @@ class FinanceChartsSection extends StatelessWidget {
           .where(
             (entry) =>
                 entry.value > 0 &&
-                !controller.incomeCategories.any((item) => item.id == entry.key),
+                !controller.incomeCategories.any(
+                  (item) => item.id == entry.key,
+                ),
           )
           .fold<double>(0, (sum, entry) => sum + entry.value);
       if (orphan > 0) {

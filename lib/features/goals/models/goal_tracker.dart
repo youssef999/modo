@@ -89,7 +89,8 @@ class GoalTracker {
       current: (map['current'] as num?)?.toDouble() ?? 0,
       target: (map['target'] as num?)?.toDouble() ?? 0,
       unit: map['unit'] as String? ?? '',
-      milestones: (map['milestones'] as List<dynamic>?)
+      milestones:
+          (map['milestones'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],

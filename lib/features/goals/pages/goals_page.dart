@@ -7,6 +7,7 @@ import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_progress_card.dart';
 import 'package:life_daily_app/features/goals/widgets/goals_board.dart';
+import 'package:life_daily_app/features/goals/widgets/tasks_hub.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/feedback/app_empty_state.dart';
@@ -41,11 +42,7 @@ class GoalsPage extends StatelessWidget {
                   showFilter: true,
                   doneOnly: true,
                 ),
-                _ => const GoalsBoard(
-                  showHeader: false,
-                  showProgress: false,
-                  showFilter: true,
-                ),
+                _ => const TasksHub(),
               };
             },
           );
@@ -92,8 +89,7 @@ class _Folders extends StatelessWidget {
                   message: LocaleKeys.foldersHint.tr,
                 )
               : GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 320,
                     mainAxisSpacing: AppSpacing.md,
                     crossAxisSpacing: AppSpacing.md,

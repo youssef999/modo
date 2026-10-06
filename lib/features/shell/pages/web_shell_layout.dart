@@ -11,12 +11,17 @@ import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/core/models/app_view_mode.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/widgets/auth_dialog.dart';
+import 'package:life_daily_app/features/auth/widgets/profile_header.dart';
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
-import 'package:life_daily_app/features/finance/widgets/add_finance_entry_dialog.dart';
+import 'package:life_daily_app/features/daily/pages/daily_hub_page.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/pages/goals_page.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_invite_banner.dart';
+import 'package:life_daily_app/features/notifications/widgets/daily_reminder_tile.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
+import 'package:life_daily_app/features/shell/widgets/quick_add_sheet.dart';
+import 'package:life_daily_app/features/shell/widgets/shell_page_title.dart';
+import 'package:life_daily_app/shared/widgets/branding/modo_brand.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_theme_picker.dart';
 
@@ -68,23 +73,42 @@ class WebShellLayout extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1100),
+                      constraints: const BoxConstraints(
+                        maxWidth: AppLayout.wideMaxWidth,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
+                          horizontal: AppSpacing.sm,
                           vertical: AppSpacing.sm,
                         ),
-                        child: GetBuilder<ShellController>(
-                          id: 'shell',
-                          builder: (controller) {
-                            return IndexedStack(
-                              index: controller.area.index,
-                              children: const [
-                                GoalsPage(embed: true),
-                                FinancePage(embed: true),
-                              ],
-                            );
-                          },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                AppSpacing.md,
+                                AppSpacing.md,
+                                AppSpacing.md,
+                                AppSpacing.sm,
+                              ),
+                              child: ShellPageTitle(),
+                            ),
+                            Expanded(
+                              child: GetBuilder<ShellController>(
+                                id: 'shell',
+                                builder: (controller) {
+                                  return IndexedStack(
+                                    index: controller.area.index,
+                                    children: const [
+                                      DailyHubPage(embed: true),
+                                      GoalsPage(embed: true),
+                                      FinancePage(embed: true),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -113,9 +137,7 @@ class _WebDrawer extends StatelessWidget {
     return SizedBox(
       width: drawerWidth,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.card,
-        ),
+        decoration: BoxDecoration(color: colors.card),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -130,36 +152,10 @@ class _WebDrawer extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.sm - 2),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: Icon(
-                        Icons.dashboard_customize_rounded,
-                        color: colors.primary,
-                        size: AppIconSize.md,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            LocaleKeys.appName.tr,
-                            style: AppTextStyles.h6(colors).copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Text(
-                            LocaleKeys.homeSubtitle.tr,
-                            style: AppTextStyles.caption(colors),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                    const Expanded(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: ModoBrandLockup(),
                       ),
                     ),
                     GetBuilder<ShellController>(
@@ -179,30 +175,65 @@ class _WebDrawer extends StatelessWidget {
               ),
               const Divider(height: 1),
 
-              // Drawer Content: Preferences & Cloud Sync
+              // Drawer Shortcuts and utilities
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
+                  ),
                   children: [
-                    const _WebSyncCard(),
+                    const ProfileHeader(),
                     const SizedBox(height: AppSpacing.md),
+                    const Divider(height: 1),
+                    const SizedBox(height: AppSpacing.md),
+
                     Text(
-                      LocaleKeys.theme.tr,
+                      LocaleKeys.settings.tr,
                       style: AppTextStyles.caption(colors).copyWith(
                         fontWeight: FontWeight.w600,
                         color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    const AppThemePicker(),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      LocaleKeys.language.tr,
-                      style: AppTextStyles.caption(colors).copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colors.textSecondary,
+
+                    // Quick Shortcut to Month's Plan
+                    _DrawerActionTile(
+                      icon: Icons.calendar_month_rounded,
+                      label: LocaleKeys.financeMonthPlan.tr,
+                      onTap: () => AppNavigator.toMonthPlan(),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // Quick Folders Shortcut
+                    GetBuilder<ShellController>(
+                      id: 'shell',
+                      builder: (shell) => _DrawerActionTile(
+                        icon: Icons.folder_open_rounded,
+                        label: LocaleKeys.navFolders.tr,
+                        onTap: () {
+                          shell.selectArea(ShellArea.goals);
+                          shell.selectSection(2);
+                        },
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1),
+
+              // Drawer Footer: Preferences & Cloud Sync
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _WebSyncCard(),
+                    const SizedBox(height: AppSpacing.sm),
+                    const DailyReminderTile(),
+                    const SizedBox(height: AppSpacing.md),
+                    const AppThemePicker(compact: true),
                     const SizedBox(height: AppSpacing.sm),
                     GetBuilder<LocaleController>(
                       builder: (locale) {
@@ -244,6 +275,73 @@ class _WebDrawer extends StatelessWidget {
   }
 }
 
+class _DrawerActionTile extends StatefulWidget {
+  const _DrawerActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  State<_DrawerActionTile> createState() => _DrawerActionTileState();
+}
+
+class _DrawerActionTileState extends State<_DrawerActionTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: _hovered ? colors.surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                widget.icon,
+                size: AppIconSize.md,
+                color: colors.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: AppTextStyles.body2(
+                    colors,
+                  ).copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 12,
+                color: colors.textSecondary.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Sleek Top Header with Drawer Toggle, Core Area Switcher, and Primary Action Button
 class _WebTopHeader extends StatelessWidget {
   const _WebTopHeader();
@@ -255,7 +353,9 @@ class _WebTopHeader extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.card,
-        border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.7))),
+        border: Border(
+          bottom: BorderSide(color: colors.border.withValues(alpha: 0.7)),
+        ),
         boxShadow: [
           BoxShadow(
             color: colors.textPrimary.withValues(alpha: 0.02),
@@ -272,8 +372,6 @@ class _WebTopHeader extends StatelessWidget {
         child: GetBuilder<ShellController>(
           id: 'shell',
           builder: (controller) {
-            final isGoals = controller.area == ShellArea.goals;
-
             return Row(
               children: [
                 // Toggle Drawer Button
@@ -290,56 +388,36 @@ class _WebTopHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.xs),
 
-                // Brand Pill
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.xs),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(
-                        Icons.space_dashboard_rounded,
-                        color: colors.primary,
-                        size: AppIconSize.md,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      LocaleKeys.appName.tr,
-                      style: AppTextStyles.h6(colors).copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                  ],
+                // Brand Pill — flexible so it can shrink on narrow screens
+                const Flexible(
+                  fit: FlexFit.loose,
+                  child: ModoBrandLockup(logoSize: AppLogoSize.sm),
                 ),
 
-                const Spacer(),
+                const SizedBox(width: AppSpacing.sm),
 
-                // Prominent Goals & Finance Capsule Switcher in the Top Bar
-                _AreaCapsuleSwitcher(
-                  currentArea: controller.area,
-                  onSelect: (area) => controller.selectArea(area),
+                // Prominent Goals & Finance Capsule Switcher — centered, flexible
+                Flexible(
+                  flex: 2,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: _AreaCapsuleSwitcher(
+                        currentArea: controller.area,
+                        onSelect: (area) => controller.selectArea(area),
+                      ),
+                    ),
+                  ),
                 ),
 
-                const Spacer(),
+                const SizedBox(width: AppSpacing.sm),
 
                 // Action Button
                 AppButton(
-                  label: isGoals
-                      ? LocaleKeys.addGoal.tr
-                      : LocaleKeys.financeAdd.tr,
+                  label: LocaleKeys.quickAdd.tr,
                   variant: AppButtonVariant.primary,
-                  onPressed: () {
-                    if (isGoals) {
-                      AppNavigator.toGoalEditor();
-                    } else {
-                      AddFinanceEntryDialog.show(context);
-                    }
-                  },
+                  onPressed: () =>
+                      QuickAddSheet.show(context, type: controller.fabType),
                 ),
               ],
             );
@@ -350,7 +428,7 @@ class _WebTopHeader extends StatelessWidget {
   }
 }
 
-/// Elegant Capsule Switcher between Goals and Finance in the Top Bar
+/// Elegant Capsule Switcher across 4 areas in the Top Bar
 class _AreaCapsuleSwitcher extends StatelessWidget {
   const _AreaCapsuleSwitcher({
     required this.currentArea,
@@ -375,10 +453,18 @@ class _AreaCapsuleSwitcher extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _CapsuleItem(
-            icon: Icons.flag_rounded,
-            label: LocaleKeys.webNavGoals.tr,
-            selected: currentArea == ShellArea.goals,
+            icon: Icons.calendar_today_rounded,
+            label: LocaleKeys.todayTitle.tr,
+            selected: currentArea == ShellArea.today,
             activeColor: colors.primary,
+            onTap: () => onSelect(ShellArea.today),
+          ),
+          const SizedBox(width: 4),
+          _CapsuleItem(
+            icon: Icons.task_alt_rounded,
+            label: LocaleKeys.navTasks.tr,
+            selected: currentArea == ShellArea.goals,
+            activeColor: colors.info,
             onTap: () => onSelect(ShellArea.goals),
           ),
           const SizedBox(width: 4),
@@ -437,8 +523,8 @@ class _CapsuleItemState extends State<_CapsuleItem> {
             color: widget.selected
                 ? widget.activeColor.withValues(alpha: 0.15)
                 : _hovered
-                    ? colors.card
-                    : Colors.transparent,
+                ? colors.card
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
               color: widget.selected
@@ -452,14 +538,20 @@ class _CapsuleItemState extends State<_CapsuleItem> {
               Icon(
                 widget.icon,
                 size: AppIconSize.md,
-                color: widget.selected ? widget.activeColor : colors.textSecondary,
+                color: widget.selected
+                    ? widget.activeColor
+                    : colors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs + 2),
               Text(
                 widget.label,
                 style: AppTextStyles.body2(colors).copyWith(
-                  fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w500,
-                  color: widget.selected ? widget.activeColor : colors.textPrimary,
+                  fontWeight: widget.selected
+                      ? FontWeight.w600
+                      : FontWeight.w500,
+                  color: widget.selected
+                      ? widget.activeColor
+                      : colors.textPrimary,
                 ),
               ),
             ],
@@ -481,7 +573,9 @@ class _WebSubNavBar extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.background,
-        border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.6))),
+        border: Border(
+          bottom: BorderSide(color: colors.border.withValues(alpha: 0.6)),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -490,10 +584,13 @@ class _WebSubNavBar extends StatelessWidget {
         ),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: AppLayout.wideMaxWidth),
             child: GetBuilder<ShellController>(
               id: 'shell',
               builder: (controller) {
+                if (controller.area == ShellArea.today) {
+                  return const SizedBox.shrink();
+                }
                 final isGoals = controller.area == ShellArea.goals;
 
                 if (isGoals) {
@@ -502,14 +599,19 @@ class _WebSubNavBar extends StatelessWidget {
                       _SubTabPill(
                         icon: Icons.view_agenda_outlined,
                         label: LocaleKeys.navList.tr,
-                        selected: controller.sectionIndex == 0 &&
+                        selected:
+                            controller.sectionIndex == 0 &&
                             (!Get.isRegistered<GoalsController>() ||
-                                Get.find<GoalsController>().viewMode != AppViewMode.kanban),
+                                Get.find<GoalsController>().viewMode !=
+                                    AppViewMode.kanban),
                         onTap: () {
                           controller.selectSection(0);
                           if (Get.isRegistered<GoalsController>() &&
-                              Get.find<GoalsController>().viewMode == AppViewMode.kanban) {
-                            Get.find<GoalsController>().setViewMode(AppViewMode.list);
+                              Get.find<GoalsController>().viewMode ==
+                                  AppViewMode.kanban) {
+                            Get.find<GoalsController>().setViewMode(
+                              AppViewMode.list,
+                            );
                           }
                         },
                       ),
@@ -517,13 +619,17 @@ class _WebSubNavBar extends StatelessWidget {
                       _SubTabPill(
                         icon: Icons.view_kanban_rounded,
                         label: LocaleKeys.kanbanBoard.tr,
-                        selected: controller.sectionIndex == 0 &&
+                        selected:
+                            controller.sectionIndex == 0 &&
                             Get.isRegistered<GoalsController>() &&
-                            Get.find<GoalsController>().viewMode == AppViewMode.kanban,
+                            Get.find<GoalsController>().viewMode ==
+                                AppViewMode.kanban,
                         onTap: () {
                           controller.selectSection(0);
                           if (Get.isRegistered<GoalsController>()) {
-                            Get.find<GoalsController>().setViewMode(AppViewMode.kanban);
+                            Get.find<GoalsController>().setViewMode(
+                              AppViewMode.kanban,
+                            );
                           }
                         },
                       ),
@@ -632,8 +738,8 @@ class _SubTabPillState extends State<_SubTabPill> {
             color: widget.selected
                 ? colors.primary.withValues(alpha: 0.12)
                 : _hovered
-                    ? colors.card
-                    : Colors.transparent,
+                ? colors.card
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: widget.selected
@@ -653,8 +759,12 @@ class _SubTabPillState extends State<_SubTabPill> {
               Text(
                 widget.label,
                 style: AppTextStyles.caption(colors).copyWith(
-                  fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w500,
-                  color: widget.selected ? colors.primary : colors.textSecondary,
+                  fontWeight: widget.selected
+                      ? FontWeight.w600
+                      : FontWeight.w500,
+                  color: widget.selected
+                      ? colors.primary
+                      : colors.textSecondary,
                 ),
               ),
             ],
@@ -722,11 +832,13 @@ class _WebSyncCard extends StatelessWidget {
                           ),
                           Text(
                             isBackedUp
-                                ? (auth.user?.email ?? auth.user?.displayName ?? '')
+                                ? (auth.user?.email ??
+                                      auth.user?.displayName ??
+                                      '')
                                 : LocaleKeys.signIn.tr,
-                            style: AppTextStyles.caption(colors).copyWith(
-                              color: colors.primary,
-                            ),
+                            style: AppTextStyles.caption(
+                              colors,
+                            ).copyWith(color: colors.primary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),

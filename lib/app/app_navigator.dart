@@ -18,6 +18,7 @@ import 'package:life_daily_app/features/goals/pages/goals_all_page.dart';
 import 'package:life_daily_app/features/goals/pages/goals_page.dart';
 import 'package:life_daily_app/features/goals/bindings/goals_binding.dart';
 import 'package:life_daily_app/features/home/bindings/home_binding.dart';
+import 'package:life_daily_app/features/notifications/bindings/notifications_binding.dart';
 import 'package:life_daily_app/features/shell/bindings/shell_binding.dart';
 import 'package:life_daily_app/features/shell/pages/shell_page.dart';
 
@@ -122,5 +123,6 @@ class AppStartBinding extends Bindings {
     GoalsBinding().dependencies();
     FinanceBinding().dependencies();
     ShellBinding().dependencies();
+    NotificationsBinding().dependencies();
   }
 }

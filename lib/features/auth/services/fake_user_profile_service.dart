@@ -11,7 +11,9 @@ class FakeUserProfileService implements IUserProfileService {
   Future<String?> readDisplayName(String uid) async => _names[uid];
 
   @override
-  Future<void> saveDisplayName(String uid, String name) async {
+  Future<bool> claimDisplayName(String uid, String name) async {
+    if ((_names[uid] ?? '').isNotEmpty) return false;
     _names[uid] = name;
+    return true;
   }
 }

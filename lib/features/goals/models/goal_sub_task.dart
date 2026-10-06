@@ -68,9 +68,12 @@ class GoalSubTask {
       id: map['id'] as String? ?? '',
       title: map['title'] as String? ?? '',
       isCompleted: map['isCompleted'] as bool? ?? false,
-      checkInDates: (map['checkInDates'] as List?)?.map((e) => e.toString()).toList() ??
+      checkInDates:
+          (map['checkInDates'] as List?)?.map((e) => e.toString()).toList() ??
           const [],
-      dueDate: map['dueDate'] != null ? DateTime.tryParse(map['dueDate'].toString()) : null,
+      dueDate: map['dueDate'] != null
+          ? DateTime.tryParse(map['dueDate'].toString())
+          : null,
       order: (map['order'] as num?)?.toInt() ?? 0,
     );
   }

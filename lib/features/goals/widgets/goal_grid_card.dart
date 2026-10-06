@@ -103,7 +103,8 @@ class GoalGridCard extends StatelessWidget {
                       const SizedBox(width: AppSpacing.xs),
                       GoalStatusBadge(
                         status: goal.status,
-                        onChanged: (newStatus) => controller.changeGoalStatus(goal, newStatus),
+                        onChanged: (newStatus) =>
+                            controller.changeGoalStatus(goal, newStatus),
                         compact: true,
                       ),
                     ],

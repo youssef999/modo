@@ -14,7 +14,7 @@ import 'i_goal_invite_repository.dart';
 /// - `goals/{goalId}.memberIds` — array updated atomically when invite is accepted.
 class FirestoreGoalInviteRepository implements IGoalInviteRepository {
   FirestoreGoalInviteRepository({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
@@ -58,21 +58,6 @@ class FirestoreGoalInviteRepository implements IGoalInviteRepository {
     );
 
     await ref.set(invite.toMap());
-
-    // Also queue an email in the 'mail' collection for Firebase Trigger Email extension (if configured)
-    try {
-      await _db.collection('mail').add({
-        'to': [cleanEmail],
-        'message': {
-          'subject': 'You have been invited to collaborate on "${invite.goalTitle}" in Life Daily',
-          'text': '${inviterName.isNotEmpty ? inviterName : inviterEmail} invited you to join the goal "${invite.goalTitle}" on Life Daily. Log in with $cleanEmail to accept your invitation.',
-          'html': '<p><strong>${inviterName.isNotEmpty ? inviterName : inviterEmail}</strong> invited you to join the goal <strong>${invite.goalTitle}</strong> on Life Daily.</p><p>Log in with <code>$cleanEmail</code> on the app to accept and collaborate.</p>',
-        },
-      });
-    } catch (_) {
-      // Ignored if rules don't permit or mail extension isn't used
-    }
-
     return invite;
   }
 
@@ -82,13 +67,12 @@ class FirestoreGoalInviteRepository implements IGoalInviteRepository {
     final snapshot = await _invitesCol
         .where('inviteeEmail', isEqualTo: cleanEmail)
         .where('status', isEqualTo: GoalInviteStatus.pending.name)
+        .orderBy('createdAt', descending: true)
         .get();
 
-    final list = snapshot.docs
+    return snapshot.docs
         .map((doc) => GoalInvite.fromMap(doc.id, doc.data()))
         .toList();
-    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return list;
   }
 
   @override
@@ -107,25 +91,14 @@ class FirestoreGoalInviteRepository implements IGoalInviteRepository {
       joinedAt: now,
     );
 
-    // Firestore transaction: all reads must happen before any writes
+    // Firestore transaction: update invite + add member + update memberIds
     await _db.runTransaction((tx) async {
       final inviteRef = _invitesCol.doc(invite.id);
-      final topGoalRef = _db.doc(FirestorePaths.goalDoc(invite.goalId));
-      final userGoalRef = _db
-          .collection(FirestorePaths.userGoals(invite.inviterUid))
-          .doc(invite.goalId);
-      final acceptorGoalRef = _db
-          .collection(FirestorePaths.userGoals(acceptorUid))
-          .doc(invite.goalId);
+      final goalRef = _db.doc(FirestorePaths.goalDoc(invite.goalId));
       final memberRef = _db.doc(
         FirestorePaths.goalMemberDoc(invite.goalId, acceptorUid),
       );
 
-      // 1. Transaction read phase
-      final topGoalSnap = await tx.get(topGoalRef);
-      final userGoalSnap = await tx.get(userGoalRef);
-
-      // 2. Transaction write phase
       tx.update(inviteRef, {
         'status': GoalInviteStatus.accepted.name,
         'respondedAt': now.toIso8601String(),
@@ -133,80 +106,10 @@ class FirestoreGoalInviteRepository implements IGoalInviteRepository {
 
       tx.set(memberRef, member.toMap());
 
-      if (topGoalSnap.exists) {
-        tx.update(topGoalRef, {
-          'memberIds': FieldValue.arrayUnion([acceptorUid]),
-          'members': FieldValue.arrayUnion([member.toMap()]),
-          'updatedAt': now.toIso8601String(),
-        });
-        if (userGoalSnap.exists) {
-          tx.update(userGoalRef, {
-            'memberIds': FieldValue.arrayUnion([acceptorUid]),
-            'members': FieldValue.arrayUnion([member.toMap()]),
-            'updatedAt': now.toIso8601String(),
-          });
-        }
-        final topData = Map<String, dynamic>.from(topGoalSnap.data() ?? {});
-        final existingMemberIds =
-            List<String>.from(topData['memberIds'] as List? ?? []);
-        if (!existingMemberIds.contains(acceptorUid)) {
-          existingMemberIds.add(acceptorUid);
-        }
-        topData['memberIds'] = existingMemberIds;
-        final existingMembers =
-            List<dynamic>.from(topData['members'] as List? ?? []);
-        existingMembers.add(member.toMap());
-        topData['members'] = existingMembers;
-        topData['updatedAt'] = now.toIso8601String();
-        tx.set(acceptorGoalRef, topData, SetOptions(merge: true));
-      } else if (userGoalSnap.exists) {
-        final userData = Map<String, dynamic>.from(userGoalSnap.data() ?? {});
-        final existingMemberIds = List<String>.from(
-            userData['memberIds'] as List? ?? [invite.inviterUid]);
-        if (!existingMemberIds.contains(acceptorUid)) {
-          existingMemberIds.add(acceptorUid);
-        }
-        userData['memberIds'] = existingMemberIds;
-        final existingMembers =
-            List<dynamic>.from(userData['members'] as List? ?? []);
-        existingMembers.add(member.toMap());
-        userData['members'] = existingMembers;
-        userData['updatedAt'] = now.toIso8601String();
-
-        tx.set(topGoalRef, userData, SetOptions(merge: true));
-        tx.set(userGoalRef, userData, SetOptions(merge: true));
-        tx.set(acceptorGoalRef, userData, SetOptions(merge: true));
-      } else {
-        // Goal doc didn't exist at either top-level or inviter's path: create it
-        final newGoalData = {
-          'id': invite.goalId,
-          'ownerId': invite.inviterUid,
-          'title': invite.goalTitle,
-          'details': '',
-          'kind': 'goal',
-          'startsAt': now.toIso8601String(),
-          'dueAt': now.toIso8601String(),
-          'category': '',
-          'status': 'notStarted',
-          'checkIns': [],
-          'createdAt': now.toIso8601String(),
-          'updatedAt': now.toIso8601String(),
-          'memberIds': [invite.inviterUid, acceptorUid],
-          'members': [
-            {
-              'uid': invite.inviterUid,
-              'email': invite.inviterEmail,
-              'displayName': invite.inviterName,
-              'role': 'owner',
-              'joinedAt': invite.createdAt.toIso8601String(),
-            },
-            member.toMap(),
-          ],
-        };
-        tx.set(topGoalRef, newGoalData);
-        tx.set(userGoalRef, newGoalData);
-        tx.set(acceptorGoalRef, newGoalData);
-      }
+      tx.update(goalRef, {
+        'memberIds': FieldValue.arrayUnion([acceptorUid]),
+        'members': FieldValue.arrayUnion([member.toMap()]),
+      });
     });
   }
 
@@ -216,24 +119,5 @@ class FirestoreGoalInviteRepository implements IGoalInviteRepository {
       'status': GoalInviteStatus.declined.name,
       'respondedAt': DateTime.now().toIso8601String(),
     });
-  }
-
-  @override
-  Future<List<GoalInvite>> fetchGoalPendingInvites(String goalId) async {
-    final snapshot = await _invitesCol
-        .where('goalId', isEqualTo: goalId)
-        .where('status', isEqualTo: GoalInviteStatus.pending.name)
-        .get();
-
-    final list = snapshot.docs
-        .map((doc) => GoalInvite.fromMap(doc.id, doc.data()))
-        .toList();
-    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return list;
-  }
-
-  @override
-  Future<void> cancelInvite(String inviteId) async {
-    await _invitesCol.doc(inviteId).delete();
   }
 }

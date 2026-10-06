@@ -72,10 +72,7 @@ class _AppBannerAdState extends State<AppBannerAd> {
     final colors = context.appPalette;
     final banner = _banner;
     final child = !_loaded || banner == null
-        ? const SizedBox(
-            width: double.infinity,
-            height: AdConfig.bannerHeight,
-          )
+        ? const SizedBox(width: double.infinity, height: AdConfig.bannerHeight)
         : SizedBox(
             width: double.infinity,
             height: banner.size.height.toDouble(),

@@ -29,7 +29,7 @@ class _FakeAuthService implements IAuthService {
   AppUser? get currentUser => _user;
 
   @override
-  Stream<AppUser?> get authStateChanges => Stream.value(_user);
+  Future<AppUser?> restoreSession() async => currentUser;
 
   @override
   Future<AppUser> ensureAnonymousSession() async => _user!;
@@ -38,24 +38,27 @@ class _FakeAuthService implements IAuthService {
   @override
   Future<AppUser> continueWithApple() async => _user!;
   @override
-  Future<AppUser> signInWithEmail(String email, String password) async => _user!;
+  Future<AppUser> signInWithEmail(String email, String password) async =>
+      _user!;
   @override
-  Future<AppUser> registerWithEmail(
-    String email,
-    String password, {
-    String? displayName,
-  }) async => _user!;
+  Future<AppUser> registerWithEmail(String email, String password) async =>
+      _user!;
   @override
   Future<void> sendPasswordReset(String email) async {}
   @override
-  Future<void> signOut() async { _user = null; }
+  Future<void> signOut() async {
+    _user = null;
+  }
 }
 
 class _FakeStorage implements IStorage {
   final Map<String, dynamic> _data = {};
-  @override T? read<T>(String key) => _data[key] as T?;
-  @override Future<void> write(String key, dynamic value) async => _data[key] = value;
-  @override Future<void> remove(String key) async => _data.remove(key);
+  @override
+  T? read<T>(String key) => _data[key] as T?;
+  @override
+  Future<void> write(String key, dynamic value) async => _data[key] = value;
+  @override
+  Future<void> remove(String key) async => _data.remove(key);
 }
 
 class _FakeGoalRepository implements IGoalRepository {
@@ -63,7 +66,8 @@ class _FakeGoalRepository implements IGoalRepository {
   final List<GoalCategory> _categories = [];
 
   @override
-  Future<List<GoalCategory>> fetchCategories(String ownerId) async => _categories;
+  Future<List<GoalCategory>> fetchCategories(String ownerId) async =>
+      _categories;
 
   @override
   Future<GoalCategory> addCategory({
@@ -180,13 +184,15 @@ class _FakeInviteRepository implements IGoalInviteRepository {
     if (idx >= 0) {
       _invites[idx] = _invites[idx].copyWith(status: GoalInviteStatus.accepted);
     }
-    _addedMembers.add(GoalMember(
-      uid: acceptorUid,
-      email: acceptorEmail,
-      displayName: acceptorName,
-      role: GoalMemberRole.partner,
-      joinedAt: DateTime.now(),
-    ));
+    _addedMembers.add(
+      GoalMember(
+        uid: acceptorUid,
+        email: acceptorEmail,
+        displayName: acceptorName,
+        role: GoalMemberRole.partner,
+        joinedAt: DateTime.now(),
+      ),
+    );
   }
 
   @override
@@ -195,18 +201,6 @@ class _FakeInviteRepository implements IGoalInviteRepository {
     if (idx >= 0) {
       _invites[idx] = _invites[idx].copyWith(status: GoalInviteStatus.declined);
     }
-  }
-
-  @override
-  Future<List<GoalInvite>> fetchGoalPendingInvites(String goalId) async {
-    return _invites
-        .where((i) => i.goalId == goalId && i.isPending)
-        .toList();
-  }
-
-  @override
-  Future<void> cancelInvite(String inviteId) async {
-    _invites.removeWhere((i) => i.id == inviteId);
   }
 }
 
@@ -397,20 +391,25 @@ void main() {
 
     test('loadPendingInvites fetches invites for current user', () async {
       // Simulate an invite sent to the current user
-      fakeInviteRepo._invites.add(GoalInvite(
-        id: 'inv-x',
-        goalId: 'goal-1',
-        goalTitle: 'Some Goal',
-        inviterUid: 'other-uid',
-        inviterEmail: 'other@test.com',
-        inviterName: 'Other Person',
-        inviteeEmail: 'owner@test.com',
-        status: GoalInviteStatus.pending,
-        createdAt: DateTime.now(),
-      ));
+      fakeInviteRepo._invites.add(
+        GoalInvite(
+          id: 'inv-x',
+          goalId: 'goal-1',
+          goalTitle: 'Some Goal',
+          inviterUid: 'other-uid',
+          inviterEmail: 'other@test.com',
+          inviterName: 'Other Person',
+          inviteeEmail: 'owner@test.com',
+          status: GoalInviteStatus.pending,
+          createdAt: DateTime.now(),
+        ),
+      );
       await controller.loadPendingInvites();
       expect(controller.pendingInvites, hasLength(1));
-      expect(controller.pendingInvites.first.inviteeEmail, equals('owner@test.com'));
+      expect(
+        controller.pendingInvites.first.inviteeEmail,
+        equals('owner@test.com'),
+      );
     });
 
     test('declineInvite removes from pendingInvites', () async {
@@ -449,7 +448,11 @@ void main() {
         role: GoalMemberRole.partner,
         joinedAt: DateTime.now(),
       );
-      await controller.assignTask(goal: updatedGoal, taskId: task.id, member: member);
+      await controller.assignTask(
+        goal: updatedGoal,
+        taskId: task.id,
+        member: member,
+      );
       final finalGoal = controller.goalById(goal.id)!;
       final assignedTask = finalGoal.tasks.first;
       expect(assignedTask.assigneeId, equals('partner-uid'));
@@ -458,28 +461,6 @@ void main() {
 
     test('isGoalOwner returns true for owner', () {
       expect(controller.isGoalOwner(controller.goals.first.id), isTrue);
-    });
-
-    test('loadGoalPendingInvites returns outgoing invites for goal', () async {
-      final goal = controller.goals.first;
-      final invite = await fakeInviteRepo.sendInvite(
-        goalId: goal.id,
-        goalTitle: goal.title,
-        inviterUid: 'owner-uid',
-        inviterEmail: 'owner@test.com',
-        inviterName: 'Owner',
-        inviteeEmail: 'collaborator@test.com',
-      );
-      final invites = await controller.loadGoalPendingInvites(goal.id);
-      expect(invites, hasLength(1));
-      expect(invites.first.id, equals(invite.id));
-      expect(invites.first.inviteeEmail, equals('collaborator@test.com'));
-
-      // cancel invite
-      final err = await controller.cancelGoalInvite(invite.id);
-      expect(err, isNull);
-      final remaining = await controller.loadGoalPendingInvites(goal.id);
-      expect(remaining, isEmpty);
     });
   });
 }

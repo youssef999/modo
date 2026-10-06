@@ -1,7 +1,7 @@
 import 'package:life_daily_app/core/models/app_priority.dart';
 import 'goal_sub_task.dart';
 
-enum GoalTaskStatus { todo, inProgress, done }
+enum GoalTaskStatus { todo, pending, inProgress, done }
 
 class GoalTask {
   const GoalTask({
@@ -16,8 +16,12 @@ class GoalTask {
     this.assigneeId,
     this.assigneeEmail,
     this.assigneeName,
-  }) : status = status ??
-            (isCompleted == true ? GoalTaskStatus.done : GoalTaskStatus.todo);
+    this.dueDate,
+    this.dueTime,
+    this.categoryId,
+  }) : status =
+           status ??
+           (isCompleted == true ? GoalTaskStatus.done : GoalTaskStatus.todo);
 
   final String id;
   final String title;
@@ -36,9 +40,16 @@ class GoalTask {
   /// Display name of the assignee.
   final String? assigneeName;
 
-  bool get isCompleted =>
-      status == GoalTaskStatus.done ||
-      (subtasks.isNotEmpty && subtasks.every((s) => s.isCompleted));
+  /// Optional date this task is scheduled for / due on.
+  final DateTime? dueDate;
+
+  /// Optional time of day label (e.g. '09:30 AM', '17:00').
+  final String? dueTime;
+
+  /// Section (shared with goal categories) this task belongs to.
+  final String? categoryId;
+
+  bool get isCompleted => status == GoalTaskStatus.done;
   int get subtasksCompletedCount => subtasks.where((s) => s.isCompleted).length;
   double get subtasksProgress => subtasks.isEmpty
       ? (isCompleted ? 1.0 : 0.0)
@@ -69,9 +80,15 @@ class GoalTask {
     String? assigneeId,
     String? assigneeEmail,
     String? assigneeName,
+    DateTime? dueDate,
+    String? dueTime,
+    String? categoryId,
     bool clearAssignee = false,
+    bool clearDueDate = false,
+    bool clearCategory = false,
   }) {
-    final resolvedStatus = status ??
+    final resolvedStatus =
+        status ??
         (isCompleted != null
             ? (isCompleted ? GoalTaskStatus.done : GoalTaskStatus.todo)
             : this.status);
@@ -84,9 +101,13 @@ class GoalTask {
       subtasks: subtasks ?? this.subtasks,
       order: order ?? this.order,
       assigneeId: clearAssignee ? null : (assigneeId ?? this.assigneeId),
-      assigneeEmail:
-          clearAssignee ? null : (assigneeEmail ?? this.assigneeEmail),
+      assigneeEmail: clearAssignee
+          ? null
+          : (assigneeEmail ?? this.assigneeEmail),
       assigneeName: clearAssignee ? null : (assigneeName ?? this.assigneeName),
+      dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
+      dueTime: clearDueDate ? null : (dueTime ?? this.dueTime),
+      categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
     );
   }
 
@@ -102,6 +123,9 @@ class GoalTask {
       if (assigneeId != null) 'assigneeId': assigneeId,
       if (assigneeEmail != null) 'assigneeEmail': assigneeEmail,
       if (assigneeName != null) 'assigneeName': assigneeName,
+      if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
+      if (dueTime != null) 'dueTime': dueTime,
+      if (categoryId != null) 'categoryId': categoryId,
     };
   }
 
@@ -113,6 +137,8 @@ class GoalTask {
         parsedStatus = GoalTaskStatus.done;
       } else if (s == 'inProgress') {
         parsedStatus = GoalTaskStatus.inProgress;
+      } else if (s == 'pending') {
+        parsedStatus = GoalTaskStatus.pending;
       }
     } else if (map['isCompleted'] == true) {
       parsedStatus = GoalTaskStatus.done;
@@ -124,10 +150,24 @@ class GoalTask {
     final rawSubtasks = map['subtasks'];
     final parsedSubtasks = rawSubtasks is List
         ? rawSubtasks
-            .whereType<Map<String, dynamic>>()
-            .map(GoalSubTask.fromMap)
-            .toList()
+              .whereType<Map<String, dynamic>>()
+              .map(GoalSubTask.fromMap)
+              .toList()
         : const <GoalSubTask>[];
+
+    DateTime? parsedDueDate;
+    final rawDueDate = map['dueDate'];
+    if (rawDueDate is DateTime) {
+      parsedDueDate = rawDueDate;
+    } else if (rawDueDate != null && rawDueDate is! String) {
+      try {
+        final dynamic d = rawDueDate;
+        final res = d.toDate();
+        if (res is DateTime) parsedDueDate = res;
+      } catch (_) {}
+    } else if (rawDueDate is String) {
+      parsedDueDate = DateTime.tryParse(rawDueDate);
+    }
 
     return GoalTask(
       id: map['id'] as String? ?? '',
@@ -140,6 +180,9 @@ class GoalTask {
       assigneeId: map['assigneeId'] as String?,
       assigneeEmail: map['assigneeEmail'] as String?,
       assigneeName: map['assigneeName'] as String?,
+      dueDate: parsedDueDate,
+      dueTime: map['dueTime'] as String?,
+      categoryId: map['categoryId'] as String?,
     );
   }
 }

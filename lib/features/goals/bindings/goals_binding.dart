@@ -11,18 +11,22 @@ import '../repositories/i_goal_invite_repository.dart';
 import '../repositories/i_goal_repository.dart';
 import '../repositories/local_goal_repository.dart';
 
+/// Permanent so the signed-in data survives the login route being replaced.
 class GoalsBinding extends Bindings {
   @override
   void dependencies() {
-    if (FirebaseBootstrap.isReady && !Get.isRegistered<IGoalInviteRepository>()) {
-      Get.lazyPut<IGoalInviteRepository>(
+    final instance = GetInstance();
+    if (FirebaseBootstrap.isReady &&
+        !Get.isRegistered<IGoalInviteRepository>()) {
+      instance.lazyPut<IGoalInviteRepository>(
         () => FirestoreGoalInviteRepository(),
         fenix: true,
+        permanent: true,
       );
     }
 
     if (!Get.isRegistered<IGoalRepository>()) {
-      Get.lazyPut<IGoalRepository>(
+      instance.lazyPut<IGoalRepository>(
         () => CachedGoalRepository(
           local: LocalGoalRepository(Get.find<IStorage>()),
           remote: FirebaseBootstrap.isReady ? FirestoreGoalRepository() : null,
@@ -32,11 +36,12 @@ class GoalsBinding extends Bindings {
               Get.find<AuthController>().isLoggedIn,
         ),
         fenix: true,
+        permanent: true,
       );
     }
 
     if (!Get.isRegistered<GoalsController>()) {
-      Get.lazyPut<GoalsController>(
+      instance.lazyPut<GoalsController>(
         () => GoalsController(
           Get.find<IGoalRepository>(),
           Get.find<IStorage>(),
@@ -45,6 +50,7 @@ class GoalsBinding extends Bindings {
               : null,
         ),
         fenix: true,
+        permanent: true,
       );
     }
   }

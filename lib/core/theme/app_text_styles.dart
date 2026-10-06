@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
 import 'app_palette.dart';
 
 class AppFonts {
@@ -106,6 +107,17 @@ class AppTextStyles {
       fontWeight: FontWeight.w400,
       height: 1.4,
       color: colors.textSecondary,
+    );
+  }
+
+  /// Modo wordmark. Color is painted by a gradient shader, so it uses white.
+  static TextStyle wordmark(double fontSize) {
+    return _cairo(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      height: 1.05,
+      letterSpacing: -0.04 * fontSize,
+      color: AppColors.brandOnNavy,
     );
   }
 

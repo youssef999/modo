@@ -11,7 +11,9 @@ import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
 
 class AppShellBottomChrome extends StatelessWidget {
-  const AppShellBottomChrome({super.key});
+  const AppShellBottomChrome({super.key, required this.onFabTap});
+
+  final VoidCallback onFabTap;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,7 @@ class AppShellBottomChrome extends StatelessWidget {
           ),
           Positioned(
             bottom: bottomGap + (barHeight / 2) - (fabSize / 2),
-            child: const AppNavFab(),
+            child: AppNavFab(onTap: onFabTap),
           ),
         ],
       ),
@@ -73,19 +75,29 @@ class _GlassBar extends StatelessWidget {
             builder: (controller) {
               return Row(
                 children: [
-                  for (final item in controller.leftItems)
-                    _NavIcon(
-                      item: item,
-                      selected: controller.sectionIndex == item.sectionIndex,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        for (final item in controller.leftItems)
+                          _NavIcon(
+                            item: item,
+                            selected: controller.area == item.area,
+                          ),
+                      ],
                     ),
+                  ),
                   SizedBox(width: fabSize),
-                  for (final item in controller.rightItems)
-                    _NavIcon(
-                      item: item,
-                      selected:
-                          !item.opensPlan &&
-                          controller.sectionIndex == item.sectionIndex,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        for (final item in controller.rightItems)
+                          _NavIcon(
+                            item: item,
+                            selected: controller.area == item.area,
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               );
             },
@@ -97,7 +109,9 @@ class _GlassBar extends StatelessWidget {
 }
 
 class AppNavFab extends StatelessWidget {
-  const AppNavFab({super.key});
+  const AppNavFab({super.key, required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +145,7 @@ class AppNavFab extends StatelessWidget {
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
-                onTap: () => Get.find<ShellController>().onFab(),
+                onTap: onTap,
                 child: Icon(
                   Icons.add_rounded,
                   color: colors.onPrimary,
@@ -158,10 +172,7 @@ class _NavIcon extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => Get.find<ShellController>().selectSection(
-          item.sectionIndex,
-          opensPlan: item.opensPlan,
-        ),
+        onTap: () => Get.find<ShellController>().selectArea(item.area),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

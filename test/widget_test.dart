@@ -27,7 +27,7 @@ void main() {
     await tester.pumpWidget(const LifeDailyApp());
     await tester.pumpAndSettle();
     expect(find.text(LocaleKeys.askNameTitle.tr), findsOneWidget);
-    expect(find.text(LocaleKeys.goalsTitle.tr), findsWidgets);
+    expect(find.text(LocaleKeys.navTasks.tr), findsWidgets);
 
     await tester.enterText(find.byType(TextField), 'Sara');
     await tester.tap(find.text(LocaleKeys.saveName.tr));

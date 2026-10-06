@@ -21,7 +21,7 @@ class CachedGoalRepository implements IGoalRepository {
   Future<List<GoalCategory>> fetchCategories(String ownerId) async {
     if (_useCloud) {
       try {
-        var items = await remote!.fetchCategories(ownerId);
+        var items = await _retryRead(() => remote!.fetchCategories(ownerId));
         if (items.isEmpty) {
           items = GoalCategory.builtIns(ownerId);
           await remote!.saveAllCategories(items);
@@ -61,7 +61,7 @@ class CachedGoalRepository implements IGoalRepository {
   Future<List<GoalModel>> fetch(String ownerId) async {
     if (_useCloud) {
       try {
-        final remoteGoals = await remote!.fetch(ownerId);
+        final remoteGoals = await _retryRead(() => remote!.fetch(ownerId));
         await local.replaceAll(remoteGoals);
         return remoteGoals;
       } catch (_) {
@@ -120,6 +120,17 @@ class CachedGoalRepository implements IGoalRepository {
         await local.replaceAll(remoteGoals);
       }
     } catch (_) {}
+  }
+
+  /// Right after sign-in Firestore can still hold the previous token for a
+  /// moment, so one failed read is retried before falling back to the cache.
+  Future<T> _retryRead<T>(Future<T> Function() read) async {
+    try {
+      return await read();
+    } catch (_) {
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      return read();
+    }
   }
 
   Future<void> _tryCloud(Future<void> Function() action) async {
