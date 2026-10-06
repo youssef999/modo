@@ -56,8 +56,35 @@ class FirebaseAuthService implements IAuthService {
 
   @override
   Future<AppUser> continueWithGoogle() async {
+    if (kIsWeb) return _googleOnWeb();
     final oauth = await _googleCredential();
     return _linkOrSignIn(oauth);
+  }
+
+  /// The popup itself signs in (or links the anonymous uid), so the result is
+  /// used directly instead of signing in a second time with its credential.
+  Future<AppUser> _googleOnWeb() async {
+    final provider = GoogleAuthProvider();
+    final current = _auth.currentUser;
+    try {
+      if (current != null && current.isAnonymous) {
+        try {
+          final linked = await current.linkWithPopup(provider);
+          return _map(_requireUser(linked.user));
+        } on FirebaseAuthException catch (error) {
+          final credential = error.credential;
+          if (!_shouldSwitchAccount(error.code) || credential == null) {
+            rethrow;
+          }
+          final result = await _auth.signInWithCredential(credential);
+          return _map(_requireUser(result.user));
+        }
+      }
+      final result = await _auth.signInWithPopup(provider);
+      return _map(_requireUser(result.user));
+    } on FirebaseAuthException catch (error) {
+      throw AppFailure(error.message ?? error.code);
+    }
   }
 
   @override
@@ -179,15 +206,6 @@ class FirebaseAuthService implements IAuthService {
   }
 
   Future<AuthCredential> _googleCredential() async {
-    if (kIsWeb) {
-      final result = await _auth.signInWithPopup(GoogleAuthProvider());
-      final credential = result.credential;
-      if (credential == null) {
-        throw const AppFailure('Google sign-in was cancelled.');
-      }
-      return credential;
-    }
-
     if (!_googleReady) {
       await GoogleSignIn.instance.initialize();
       _googleReady = true;
