@@ -34,8 +34,8 @@ class AppBoardSize {
   /// Share of the width one column takes on phones, so the next one peeks.
   static const double peekFraction = 0.85;
 
-  /// Smallest drop area for a column that sizes to its cards.
-  static const double minDropHeight = 220;
+  /// Height of the phone board's pinned status tabs.
+  static const double statusTabsHeight = 68;
   static const double maxColumnWidth = 300;
   static const double minHeight = 360;
   static const double inlineHeight = 520;

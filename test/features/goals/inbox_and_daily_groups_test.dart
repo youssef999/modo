@@ -12,7 +12,7 @@ import 'package:life_daily_app/features/goals/models/goal_category.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/models/goal_task.dart';
 import 'package:life_daily_app/features/goals/repositories/i_goal_repository.dart';
-import 'package:life_daily_app/features/goals/widgets/tasks_board.dart';
+import 'package:life_daily_app/features/goals/widgets/tasks_phone_board.dart';
 
 import '../../helpers/fake_auth_service.dart';
 
@@ -281,9 +281,7 @@ void main() {
     });
   });
 
-  testWidgets('phone board sizes columns to cards without errors', (
-    tester,
-  ) async {
+  testWidgets('phone board shows one status tab at a time', (tester) async {
     tester.view.physicalSize = const Size(390, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -300,22 +298,33 @@ void main() {
     ];
     await tester.runAsync(controller.load);
 
+    Get.put(controller);
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: SingleChildScrollView(
-            child: TasksBoard(controller: controller, compact: true),
+          body: GetBuilder<GoalsController>(
+            id: 'goals',
+            builder: (c) => Builder(
+              builder: (context) => CustomScrollView(
+                slivers: TasksPhoneBoard.slivers(context, c),
+              ),
+            ),
           ),
         ),
       ),
     );
     expect(tester.takeException(), isNull);
     expect(find.text('GYM'), findsOneWidget);
+    expect(find.text('Buy milk'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.checklist_rounded).first);
     await tester.pump();
     expect(tester.takeException(), isNull);
     expect(find.byType(TextField), findsOneWidget);
+
+    controller.selectBoardTab(GoalTaskStatus.done);
+    await tester.pump();
+    expect(find.text('GYM'), findsNothing);
   });
 
   group('Checklist', () {

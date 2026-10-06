@@ -722,6 +722,15 @@ class GoalsController extends GetxController {
     };
   }
 
+  /// Status shown by the phone board's tabs.
+  GoalTaskStatus boardTab = GoalTaskStatus.todo;
+
+  void selectBoardTab(GoalTaskStatus status) {
+    if (boardTab == status) return;
+    boardTab = status;
+    update(['goals']);
+  }
+
   List<GoalModel> get archivedGoals =>
       realGoals.where((goal) => goal.isArchived).toList();
 

@@ -37,17 +37,13 @@ void openBoardQuickAdd(
 
 /// Drag-and-drop board mixing big tasks (goals) and standalone tasks.
 class TasksBoard extends StatelessWidget {
-  const TasksBoard({super.key, required this.controller, this.compact = false});
+  const TasksBoard({super.key, required this.controller});
 
   final GoalsController controller;
-
-  /// Phone mode: columns grow with their cards and the page scrolls.
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final grouped = controller.boardItems;
-    if (compact) return _CompactBoard(grouped: grouped, controller: controller);
     return AppBoardColumns(
       count: boardColumns.length,
       padding: EdgeInsets.only(
@@ -65,95 +61,34 @@ class TasksBoard extends StatelessWidget {
   }
 }
 
-class _CompactBoard extends StatelessWidget {
-  const _CompactBoard({required this.grouped, required this.controller});
-
-  final Map<GoalTaskStatus, List<BoardItem>> grouped;
-  final GoalsController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth * AppBoardSize.peekFraction;
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: AppColumnSnapPhysics(extent: width + AppSpacing.sm),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final status in boardColumns) ...[
-                  if (status != boardColumns.first)
-                    const SizedBox(width: AppSpacing.sm),
-                  SizedBox(
-                    width: width,
-                    child: _BoardColumn(
-                      status: status,
-                      items: grouped[status] ?? const [],
-                      controller: controller,
-                      compact: true,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class _BoardColumn extends StatelessWidget {
   const _BoardColumn({
     required this.status,
     required this.items,
     required this.controller,
-    this.compact = false,
   });
 
   final GoalTaskStatus status;
   final List<BoardItem> items;
   final GoalsController controller;
-  final bool compact;
 
   Widget _cards(BuildContext context) {
     final colors = context.appPalette;
     if (items.isEmpty) {
-      final hint = Text(
-        LocaleKeys.dragGoalHere.tr,
-        textAlign: TextAlign.center,
-        style: AppTextStyles.caption(
-          colors,
-        ).copyWith(color: colors.textDisabled),
-      );
-      return compact
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-              child: hint,
-            )
-          : Center(child: hint);
-    }
-    if (compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final item in items) ...[
-            if (item != items.first) const SizedBox(height: AppSpacing.sm),
-            _DraggableItem(
-              key: ValueKey(item.key),
-              item: item,
-              controller: controller,
-            ),
-          ],
-        ],
+      return Center(
+        child: Text(
+          LocaleKeys.dragGoalHere.tr,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.caption(
+            colors,
+          ).copyWith(color: colors.textDisabled),
+        ),
       );
     }
     return ListView.separated(
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-      itemBuilder: (context, i) => _DraggableItem(
+      itemBuilder: (context, i) => BoardDraggableItem(
         key: ValueKey(items[i].key),
         item: items[i],
         controller: controller,
@@ -185,9 +120,6 @@ class _BoardColumn extends StatelessWidget {
             ),
           ),
           padding: const EdgeInsets.all(AppSpacing.sm),
-          constraints: compact
-              ? const BoxConstraints(minHeight: AppBoardSize.minDropHeight)
-              : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -197,10 +129,7 @@ class _BoardColumn extends StatelessWidget {
                 onAdd: () => openBoardQuickAdd(context, controller, status),
               ),
               const SizedBox(height: AppSpacing.sm),
-              if (compact)
-                _cards(context)
-              else
-                Expanded(child: _cards(context)),
+              Expanded(child: _cards(context)),
             ],
           ),
         );
@@ -279,8 +208,8 @@ class BoardColumnHeader extends StatelessWidget {
   }
 }
 
-class _DraggableItem extends StatelessWidget {
-  const _DraggableItem({
+class BoardDraggableItem extends StatelessWidget {
+  const BoardDraggableItem({
     super.key,
     required this.item,
     required this.controller,

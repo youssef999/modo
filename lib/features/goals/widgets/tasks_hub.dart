@@ -8,7 +8,9 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/widgets/archived_goals_sheet.dart';
+import 'package:life_daily_app/features/goals/widgets/task_section_dropdown.dart';
 import 'package:life_daily_app/features/goals/widgets/task_section_filter.dart';
+import 'package:life_daily_app/features/goals/widgets/tasks_phone_board.dart';
 import 'package:life_daily_app/features/goals/widgets/tasks_board.dart';
 import 'package:life_daily_app/features/goals/widgets/tasks_list_view.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_view_mode_toggle.dart';
@@ -28,11 +30,6 @@ class TasksHub extends StatelessWidget {
         final isBoard = controller.viewMode == AppViewMode.kanban;
         final isPhone =
             MediaQuery.sizeOf(context).width < AppBreakpoints.tablet;
-        final sections = TaskSectionFilter(
-          controller: controller,
-          value: controller.selectedCategoryId,
-          onChanged: controller.selectCategory,
-        );
         final actions = Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -54,30 +51,35 @@ class TasksHub extends StatelessWidget {
         );
 
         if (isPhone) {
-          return CustomScrollView(
+          final scroll = CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    sections,
-                    const SizedBox(height: AppSpacing.xs),
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: actions,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TaskSectionDropdown(controller: controller),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      actions,
+                    ],
+                  ),
                 ),
               ),
               if (isBoard)
-                SliverToBoxAdapter(
-                  child: TasksBoard(controller: controller, compact: true),
-                )
+                ...TasksPhoneBoard.slivers(context, controller)
               else
                 ...TasksListView.slivers(context, controller),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
             ],
+          );
+          if (!isBoard) return scroll;
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragEnd: (details) =>
+                TasksPhoneBoard.onSwipe(context, controller, details),
+            child: scroll,
           );
         }
 
@@ -86,7 +88,13 @@ class TasksHub extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: sections),
+                Expanded(
+                  child: TaskSectionFilter(
+                    controller: controller,
+                    value: controller.selectedCategoryId,
+                    onChanged: controller.selectCategory,
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 actions,
               ],
