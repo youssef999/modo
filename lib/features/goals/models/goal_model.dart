@@ -90,13 +90,14 @@ class GoalModel {
     }).length;
   }
 
-  /// Non-habit goals with tasks progress by finished tasks, whatever the
-  /// goal's status; without tasks only marking the goal done counts.
+  double get habitDaysProgress => (completedDays / plannedDays).clamp(0, 1);
+
+  /// Goals with tasks progress by finished tasks, whatever the goal's kind
+  /// or status. Otherwise habits count check-in days and other goals count
+  /// only once marked done.
   double get progress {
-    if (isHabit) {
-      return (completedDays / plannedDays).clamp(0, 1);
-    }
     if (tasks.isNotEmpty) return taskCompletionRate;
+    if (isHabit) return habitDaysProgress;
     return isDone ? 1 : 0;
   }
 
@@ -120,21 +121,13 @@ class GoalModel {
   int get trackerProgressPercent => (trackerProgress * 100).round();
 
   double get overallSuccessRate {
+    if (tasks.isNotEmpty) return taskCompletionRate;
     if (isHabit) {
-      final components = <double>[progress];
-      if (tasks.isNotEmpty) {
-        components.add(taskCompletionRate);
-      }
-      if (trackers.isNotEmpty) {
-        components.add(trackerProgress);
-      }
-      final sum = components.fold<double>(0.0, (acc, v) => acc + v);
-      return (sum / components.length).clamp(0, 1);
-    } else {
-      if (tasks.isNotEmpty) return taskCompletionRate;
-      if (trackers.isNotEmpty) return trackerProgress;
-      return isDone ? 1.0 : 0.0;
+      if (trackers.isEmpty) return habitDaysProgress;
+      return ((habitDaysProgress + trackerProgress) / 2).clamp(0, 1);
     }
+    if (trackers.isNotEmpty) return trackerProgress;
+    return isDone ? 1.0 : 0.0;
   }
 
   int get overallSuccessPercent => (overallSuccessRate * 100).round();

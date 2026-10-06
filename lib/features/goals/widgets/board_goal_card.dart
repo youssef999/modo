@@ -113,9 +113,9 @@ class _BoardGoalCardState extends State<BoardGoalCard> {
                   const SizedBox(height: AppSpacing.sm),
                   _ProgressRow(
                     progress: progress,
-                    label: goal.isHabit
-                        ? '${goal.progressPercent}%'
-                        : '$done/$total · ${goal.progressPercent}%',
+                    label: total > 0
+                        ? '$done/$total · ${goal.progressPercent}%'
+                        : '${goal.progressPercent}%',
                     tone: tone,
                     expanded: _expanded,
                     canExpand: true,

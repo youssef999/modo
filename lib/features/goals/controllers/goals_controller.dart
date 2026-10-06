@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/constants/storage_keys.dart';
@@ -30,7 +31,7 @@ class GoalsController extends GetxController {
   List<GoalCategory> categories = [];
   List<GoalInvite> pendingInvites = [];
   String? selectedCategoryId;
-  AppViewMode viewMode = AppViewMode.list;
+  AppViewMode viewMode = defaultViewMode;
   bool isLoading = true;
 
   String get ownerId {
@@ -125,8 +126,13 @@ class GoalsController extends GetxController {
     final saved = _storage.read<String>(StorageKeys.goalsViewMode);
     viewMode =
         AppViewMode.values.firstWhereOrNull((m) => m.name == saved) ??
-        AppViewMode.list;
+        defaultViewMode;
   }
+
+  /// The board is the default on web; phones start with the list.
+  static const AppViewMode defaultViewMode = kIsWeb
+      ? AppViewMode.kanban
+      : AppViewMode.list;
 
   void setViewMode(AppViewMode mode) {
     if (viewMode == mode) return;

@@ -380,6 +380,18 @@ void main() {
       }
     });
 
+    test('a habit goal with tasks also follows its tasks', () {
+      final habit = _goal(
+        'g1',
+        tasks: const [
+          GoalTask(id: 'a', title: 'A', status: GoalTaskStatus.done),
+          GoalTask(id: 'b', title: 'B', status: GoalTaskStatus.done),
+        ],
+      ).copyWith(kind: GoalKind.habit, status: GoalStatus.notStarted);
+      expect(habit.progressPercent, 100);
+      expect(habit.overallSuccessPercent, 100);
+    });
+
     test('a goal without tasks counts only when done', () {
       expect(_goal('g1').copyWith(status: GoalStatus.done).progress, 1);
       expect(_goal('g1').copyWith(status: GoalStatus.inProgress).progress, 0);

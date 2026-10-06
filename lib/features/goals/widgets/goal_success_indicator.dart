@@ -107,7 +107,9 @@ class GoalSuccessIndicator extends StatelessWidget {
                     : (goal.isDone
                           ? LocaleKeys.completeGoal.tr
                           : LocaleKeys.goalsTitle.tr),
-                value: '${goal.progressPercent}%',
+                value: goal.isHabit
+                    ? '${(goal.habitDaysProgress * 100).round()}%'
+                    : '${goal.progressPercent}%',
                 icon: Icons.check_circle_outline_rounded,
               ),
               if (goal.tasks.isNotEmpty)
