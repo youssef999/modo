@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:life_daily_app/core/storage/i_storage.dart';
 import 'package:life_daily_app/core/storage/memory_storage.dart';
 import 'package:life_daily_app/features/auth/models/app_user.dart';
 import 'package:life_daily_app/features/auth/services/i_auth_service.dart';
+import 'package:life_daily_app/features/daily/controllers/plan_controller.dart';
+import 'package:life_daily_app/features/daily/widgets/plan_breakdown.dart';
+import 'package:life_daily_app/features/daily/widgets/plan_habit_tracker.dart';
+import 'package:life_daily_app/features/daily/widgets/plan_tasks_card.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/board_item.dart';
 import 'package:life_daily_app/features/goals/models/daily_task_groups.dart';
 import 'package:life_daily_app/features/goals/models/goal_category.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/models/goal_task.dart';
+import 'package:life_daily_app/features/goals/models/plan_period.dart';
 import 'package:life_daily_app/features/goals/repositories/i_goal_repository.dart';
 import 'package:life_daily_app/features/goals/widgets/tasks_phone_board.dart';
 
@@ -417,6 +423,124 @@ void main() {
       expect(_goal('g1').copyWith(status: GoalStatus.done).progress, 1);
       expect(_goal('g1').copyWith(status: GoalStatus.inProgress).progress, 0);
     });
+  });
+
+  group('Plan periods', () {
+    final saturday = DateTime(2026, 10, 10);
+    final wednesday = DateTime(2026, 10, 14);
+
+    test('a week task is saved on the first day of its week', () async {
+      await controller.load();
+      await controller.quickAddTask(
+        title: 'Finish chapter',
+        dueDate: wednesday,
+        period: PlanPeriod.week,
+      );
+      final task = controller.inboxGoal!.tasks.single;
+      expect(task.dueDate, saturday);
+      expect(task.planPeriod, PlanPeriod.week);
+    });
+
+    test('the day view skips week tasks', () async {
+      await controller.load();
+      await controller.quickAddTask(
+        title: 'Week task',
+        dueDate: saturday,
+        period: PlanPeriod.week,
+      );
+      await controller.quickAddTask(title: 'Day task', dueDate: saturday);
+      final groups = controller.dailyTaskGroups(saturday, now: saturday);
+      expect(groups.scheduled.map((e) => e.task.title), ['Day task']);
+    });
+
+    test('quick add creates a weekly habit from this week', () async {
+      await controller.load();
+      await controller.quickAddHabit(
+        title: 'Long run',
+        repeat: PlanPeriod.week,
+        now: wednesday,
+      );
+      final habit = controller.goals.firstWhere((g) => g.title == 'Long run');
+      expect(habit.isHabit, isTrue);
+      expect(habit.repeat, PlanPeriod.week);
+      expect(habit.startsAt, saturday);
+      expect(controller.habitsForDate(wednesday), isEmpty);
+    });
+
+    for (final width in [390.0, 1400.0]) {
+      for (final period in [PlanPeriod.week, PlanPeriod.month]) {
+        testWidgets('${period.name} plan lays out at width $width', (
+          tester,
+        ) async {
+          tester.view.physicalSize = Size(width, 2400);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          final now = DateTime.now();
+          repo.goals = [
+            _goal(
+              'g1',
+              tasks: [
+                GoalTask(
+                  id: 'span',
+                  title: 'Span task',
+                  dueDate: period.startOf(now),
+                  period: period,
+                ),
+                GoalTask(id: 'day', title: 'Day task', dueDate: now),
+              ],
+            ),
+            _goal('h1', title: 'Water').copyWith(
+              kind: GoalKind.habit,
+              startsAt: now.subtract(const Duration(days: 40)),
+              dueAt: now.add(const Duration(days: 40)),
+            ),
+            _goal('h2', title: 'Long run').copyWith(
+              kind: GoalKind.habit,
+              repeat: PlanPeriod.week,
+              startsAt: now.subtract(const Duration(days: 40)),
+              dueAt: now.add(const Duration(days: 40)),
+            ),
+          ];
+          await tester.runAsync(controller.load);
+          Get.put(controller);
+          final plan = PlanController(Get.find<IStorage>())..period = period;
+
+          await tester.pumpWidget(
+            MaterialApp(
+              localizationsDelegates: GlobalMaterialLocalizations.delegates,
+              home: Scaffold(
+                body: Builder(
+                  builder: (context) {
+                    final snapshot = plan.snapshot(controller.goals);
+                    return ListView(
+                      children: [
+                        PlanHabitTracker(
+                          snapshot: snapshot,
+                          controller: controller,
+                        ),
+                        PlanTasksCard(
+                          snapshot: snapshot,
+                          controller: controller,
+                        ),
+                        PlanBreakdown(
+                          snapshot: snapshot,
+                          plan: plan,
+                          goals: controller,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+          expect(tester.takeException(), isNull);
+          expect(find.text('Water'), findsOneWidget);
+          expect(find.text('Long run'), findsOneWidget);
+          expect(find.text('Span task'), findsOneWidget);
+        });
+      }
+    }
   });
 
   group('Task sections', () {

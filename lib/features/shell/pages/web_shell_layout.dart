@@ -461,7 +461,7 @@ class _AreaCapsuleSwitcher extends StatelessWidget {
         children: [
           _CapsuleItem(
             icon: Icons.calendar_today_rounded,
-            label: LocaleKeys.todayTitle.tr,
+            label: LocaleKeys.navPlan.tr,
             selected: currentArea == ShellArea.today,
             activeColor: colors.primary,
             onTap: () => onSelect(ShellArea.today),

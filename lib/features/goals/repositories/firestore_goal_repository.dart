@@ -200,6 +200,7 @@ class FirestoreGoalRepository implements IGoalRepository {
       'memberIds': memberIds,
       'members': goal.members.map((m) => m.toMap()).toList(),
       if (goal.isInbox) 'isInbox': true,
+      'repeat': goal.repeat.name,
       'createdAt': Timestamp.fromDate(goal.createdAt),
       'updatedAt': Timestamp.fromDate(goal.updatedAt),
     };

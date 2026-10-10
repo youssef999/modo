@@ -61,7 +61,7 @@ class ShellController extends GetxController {
     return const [
       ShellNavItem(
         icon: Icons.calendar_today_rounded,
-        labelKey: LocaleKeys.todayTitle,
+        labelKey: LocaleKeys.navPlan,
         area: ShellArea.today,
       ),
       ShellNavItem(

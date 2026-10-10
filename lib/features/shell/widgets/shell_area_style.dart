@@ -6,7 +6,7 @@ import 'package:life_daily_app/features/shell/controllers/shell_controller.dart'
 extension ShellAreaStyle on ShellArea {
   String get titleKey {
     return switch (this) {
-      ShellArea.today => LocaleKeys.todayTitle,
+      ShellArea.today => LocaleKeys.navPlan,
       ShellArea.goals => LocaleKeys.navTasks,
       ShellArea.finance => LocaleKeys.financeTitle,
     };

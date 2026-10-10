@@ -11,6 +11,7 @@ import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/finance/models/finance_entry.dart';
 import 'package:life_daily_app/features/finance/widgets/add_finance_entry_dialog.dart';
 import 'package:life_daily_app/features/goals/models/goal_task.dart';
+import 'package:life_daily_app/features/goals/models/plan_period.dart';
 import 'package:life_daily_app/features/shell/models/quick_add_type.dart';
 import 'package:life_daily_app/features/shell/widgets/quick_add/quick_add_task_form.dart';
 import 'package:life_daily_app/features/shell/widgets/quick_add/quick_add_type_switch.dart';
@@ -31,6 +32,8 @@ class QuickAddSheet {
     GoalTaskStatus? status,
     String? goalId,
     String? categoryId,
+    PlanPeriod? period,
+    bool repeat = false,
   }) async {
     if (type != QuickAddType.task) {
       await _openOther(context, type);
@@ -44,6 +47,8 @@ class QuickAddSheet {
       status: status,
       goalId: goalId,
       categoryId: categoryId,
+      period: period,
+      repeat: repeat,
       onClose: () => Navigator.of(sheetContext).pop(),
       onSwitch: (next) {
         Navigator.of(sheetContext).pop();
@@ -111,6 +116,8 @@ class _QuickAddPanel extends StatelessWidget {
     this.status,
     this.goalId,
     this.categoryId,
+    this.period,
+    this.repeat = false,
   });
 
   final VoidCallback onClose;
@@ -119,6 +126,8 @@ class _QuickAddPanel extends StatelessWidget {
   final GoalTaskStatus? status;
   final String? goalId;
   final String? categoryId;
+  final PlanPeriod? period;
+  final bool repeat;
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +170,8 @@ class _QuickAddPanel extends StatelessWidget {
             status: status,
             goalId: goalId,
             categoryId: categoryId,
+            period: period,
+            repeat: repeat,
             onDone: onClose,
           ),
         ],

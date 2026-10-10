@@ -40,3 +40,25 @@ class AppBoardSize {
   static const double minHeight = 360;
   static const double inlineHeight = 520;
 }
+
+/// Plan tab: habit tracker grid and period breakdown cards.
+class AppPlanSize {
+  AppPlanSize._();
+
+  /// Smallest tracker cell; wider screens stretch cells to fill the row.
+  static const double cell = 30;
+  static const double checkBox = 22;
+  static const double rowHeight = 36;
+  static const double headerHeight = 36;
+  static const double habitNameWidth = 116;
+  static const double habitNameWidthWide = 180;
+  static const double percentWidth = 44;
+
+  /// Breakdown cards: below this width the days row scrolls sideways.
+  static const double childMinWidth = 136;
+  static const double childScrollWidth = 200;
+
+  /// Target width of a month / year breakdown card before adding a column.
+  static const double childGridWidth = 220;
+  static const int childPreviewTasks = 3;
+}

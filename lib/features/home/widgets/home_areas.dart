@@ -14,7 +14,7 @@ class HomeAreas extends StatelessWidget {
       children: [
         HomeAreaTile(
           icon: Icons.calendar_today_rounded,
-          title: LocaleKeys.todayTitle.tr,
+          title: LocaleKeys.navPlan.tr,
           subtitle: LocaleKeys.myDay.tr,
           onTap: () => Get.find<ShellController>().selectArea(ShellArea.today),
         ),

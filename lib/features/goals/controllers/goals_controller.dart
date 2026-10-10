@@ -17,6 +17,7 @@ import '../models/goal_model.dart';
 import '../models/goal_sub_task.dart';
 import '../models/goal_task.dart';
 import '../models/goal_tracker.dart';
+import '../models/plan_period.dart';
 import '../repositories/i_goal_invite_repository.dart';
 import '../repositories/i_goal_repository.dart';
 
@@ -297,6 +298,7 @@ class GoalsController extends GetxController {
     required String category,
     GoalStatus status = GoalStatus.notStarted,
     AppPriority priority = AppPriority.medium,
+    PlanPeriod repeat = PlanPeriod.day,
   }) async {
     var goal = await _repository.create(
       ownerId: ownerId,
@@ -307,13 +309,41 @@ class GoalsController extends GetxController {
       dueAt: dueAt,
       category: category,
     );
-    if (status != GoalStatus.notStarted || priority != AppPriority.medium) {
-      goal = goal.copyWith(status: status, priority: priority);
+    if (status != GoalStatus.notStarted ||
+        priority != AppPriority.medium ||
+        repeat != PlanPeriod.day) {
+      goal = goal.copyWith(status: status, priority: priority, repeat: repeat);
       await _repository.update(goal);
     }
     goals = [...goals, goal]..sort((a, b) => a.dueAt.compareTo(b.dueAt));
     update(['goals']);
     _refreshReminder();
+  }
+
+  /// One-step habit repeating every [repeat], starting with the current one.
+  Future<void> quickAddHabit({
+    required String title,
+    required PlanPeriod repeat,
+    String? categoryId,
+    AppPriority priority = AppPriority.medium,
+    DateTime? now,
+  }) async {
+    final clean = title.trim();
+    if (clean.isEmpty) return;
+    final start = repeat.startOf(now ?? DateTime.now());
+    await addGoal(
+      title: clean,
+      details: '',
+      kind: GoalKind.habit,
+      startsAt: start,
+      dueAt: repeat.defaultHabitEnd(start),
+      category:
+          categoryId ??
+          (categories.isNotEmpty ? categories.first.id : 'course'),
+      status: GoalStatus.inProgress,
+      priority: priority,
+      repeat: repeat,
+    );
   }
 
   Future<void> changeGoalPriority(
@@ -438,7 +468,7 @@ class GoalsController extends GetxController {
 
   Future<void> toggleCheckIn(GoalModel goal, DateTime day) async {
     if (!goal.canLog(day)) return;
-    final key = GoalModel.dateKey(day);
+    final key = goal.checkKey(day);
     final nextIns = {...goal.checkIns};
     if (nextIns.contains(key)) {
       nextIns.remove(key);
@@ -450,7 +480,7 @@ class GoalsController extends GetxController {
 
   Future<void> logCheckIn(GoalModel goal, DateTime day) async {
     if (!goal.canLog(day) || goal.isChecked(day)) return;
-    await _saveCheckIns(goal, {...goal.checkIns, GoalModel.dateKey(day)});
+    await _saveCheckIns(goal, {...goal.checkIns, goal.checkKey(day)});
   }
 
   Future<void> _saveCheckIns(GoalModel goal, Set<String> checkIns) async {
@@ -620,23 +650,25 @@ class GoalsController extends GetxController {
     update(['goals', 'daily']);
   }
 
+  /// Daily habits running on [date]; longer repeats live in the plan views.
   List<GoalModel> habitsForDate(DateTime date) {
-    return goals.where((g) => g.isHabit && !g.isArchived).toList();
+    return goals
+        .where(
+          (g) =>
+              g.isHabit &&
+              !g.isArchived &&
+              g.repeat == PlanPeriod.day &&
+              g.containsDay(date),
+        )
+        .toList();
   }
 
   bool isHabitDoneForDate(GoalModel habit, DateTime date) {
-    return habit.checkIns.contains(GoalModel.dateKey(date));
+    return habit.isChecked(date);
   }
 
   Future<void> toggleHabitForDate(GoalModel habit, DateTime date) async {
-    final key = GoalModel.dateKey(date);
-    final nextIns = {...habit.checkIns};
-    if (nextIns.contains(key)) {
-      nextIns.remove(key);
-    } else {
-      nextIns.add(key);
-    }
-    await _saveCheckIns(habit, nextIns);
+    await toggleCheckIn(habit, date);
     update(['goals', 'daily']);
   }
 
@@ -667,6 +699,7 @@ class GoalsController extends GetxController {
     for (final goal in goals) {
       if (goal.isArchived) continue;
       for (final task in goal.tasks) {
+        if (task.planPeriod != PlanPeriod.day) continue;
         final entry = (goal: goal, task: task);
         final due = task.dueDate;
         if (due == null) {
@@ -827,9 +860,14 @@ class GoalsController extends GetxController {
     String? assigneeEmail,
     String? assigneeName,
     String? categoryId,
+    PlanPeriod period = PlanPeriod.day,
   }) async {
     final cleanTitle = title.trim();
     if (cleanTitle.isEmpty) return;
+    final spanStart = period != PlanPeriod.day && dueDate != null
+        ? period.startOf(dueDate)
+        : null;
+    final isSpan = spanStart != null;
 
     GoalModel? goal;
     if (goalId != null && goalId.isNotEmpty) {
@@ -844,12 +882,13 @@ class GoalsController extends GetxController {
       priority: priority,
       goalId: goal.id,
       order: goal.tasks.length,
-      dueDate: dueDate,
-      dueTime: dueTime,
+      dueDate: spanStart ?? dueDate,
+      dueTime: isSpan ? null : dueTime,
       assigneeId: assigneeId,
       assigneeEmail: assigneeEmail,
       assigneeName: assigneeName,
       categoryId: categoryId,
+      period: isSpan ? period : null,
     );
 
     final next = goal.copyWith(

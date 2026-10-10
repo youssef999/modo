@@ -2,6 +2,7 @@ import 'package:life_daily_app/core/models/app_priority.dart';
 import 'goal_member.dart';
 import 'goal_task.dart';
 import 'goal_tracker.dart';
+import 'plan_period.dart';
 
 enum GoalStatus {
   notStarted,
@@ -36,6 +37,7 @@ class GoalModel {
     this.members = const [],
     this.memberIds = const [],
     this.isInbox = false,
+    this.repeat = PlanPeriod.day,
   });
 
   final String id;
@@ -64,6 +66,10 @@ class GoalModel {
   /// The hidden "General tasks" container for tasks without a goal.
   final bool isInbox;
 
+  /// How often a habit repeats. Each check-in key is the first day of a
+  /// repetition (the day itself for daily habits).
+  final PlanPeriod repeat;
+
   bool get isArchived => status == GoalStatus.archived;
   bool get isActive =>
       status == GoalStatus.notStarted ||
@@ -78,16 +84,21 @@ class GoalModel {
 
   DateTime get rangeEnd => dateOnly(dueAt);
 
+  /// Repetitions planned between the start and end dates.
   int get plannedDays {
-    final days = rangeEnd.difference(rangeStart).inDays + 1;
-    return days < 1 ? 1 : days;
+    final count = repeat.startsBetween(rangeStart, rangeEnd).length;
+    return count < 1 ? 1 : count;
   }
 
+  /// Repetitions checked inside the range.
   int get completedDays {
-    return checkIns.toSet().where((key) {
-      final day = parseDateKey(key);
-      return day != null && containsDay(day);
-    }).length;
+    return checkIns
+        .map(parseDateKey)
+        .whereType<DateTime>()
+        .where(overlapsPeriodOf)
+        .map(repeat.startOf)
+        .toSet()
+        .length;
   }
 
   double get habitDaysProgress => (completedDays / plannedDays).clamp(0, 1);
@@ -144,32 +155,34 @@ class GoalModel {
     return !value.isBefore(rangeStart) && !value.isAfter(rangeEnd);
   }
 
-  bool canLog(DateTime day, {DateTime? now}) {
-    final today = dateOnly(now ?? DateTime.now());
-    final value = dateOnly(day);
-    return isHabit && containsDay(value) && !value.isAfter(today);
+  /// Whether the repetition containing [day] overlaps the habit's range.
+  bool overlapsPeriodOf(DateTime day) {
+    final start = repeat.startOf(day);
+    return !repeat.endOf(start).isBefore(rangeStart) &&
+        !start.isAfter(rangeEnd);
   }
 
-  bool isChecked(DateTime day) => checkIns.contains(dateKey(day));
+  /// A repetition can be checked once it has started and while in range.
+  bool canLog(DateTime day, {DateTime? now}) {
+    final today = dateOnly(now ?? DateTime.now());
+    return isHabit &&
+        overlapsPeriodOf(day) &&
+        !repeat.startOf(day).isAfter(today);
+  }
 
+  /// Check-in key of the repetition containing [day].
+  String checkKey(DateTime day) => dateKey(repeat.startOf(day));
+
+  bool isChecked(DateTime day) => checkIns.contains(checkKey(day));
+
+  /// The latest [count] repetitions up to today, within the range.
   List<DateTime> recentDays({int count = 7, DateTime? now}) {
     final today = dateOnly(now ?? DateTime.now());
-    var end = today.isAfter(rangeEnd) ? rangeEnd : today;
-    if (end.isBefore(rangeStart)) {
-      end = rangeStart.add(Duration(days: count - 1));
-      if (end.isAfter(rangeEnd)) end = rangeEnd;
-    }
-    var start = end.subtract(Duration(days: count - 1));
-    if (start.isBefore(rangeStart)) start = rangeStart;
-    final days = <DateTime>[];
-    for (
-      var day = start;
-      !day.isAfter(end);
-      day = day.add(const Duration(days: 1))
-    ) {
-      days.add(day);
-    }
-    return days;
+    final starts = repeat.startsBetween(rangeStart, rangeEnd);
+    final reached = starts.where((s) => !s.isAfter(today)).length;
+    final end = reached < count ? count : reached;
+    final from = end - count < 0 ? 0 : end - count;
+    return starts.sublist(from, end > starts.length ? starts.length : end);
   }
 
   GoalModel copyWith({
@@ -190,6 +203,7 @@ class GoalModel {
     List<GoalMember>? members,
     List<String>? memberIds,
     bool? isInbox,
+    PlanPeriod? repeat,
   }) {
     return GoalModel(
       id: id,
@@ -211,13 +225,14 @@ class GoalModel {
       members: members ?? this.members,
       memberIds: memberIds ?? this.memberIds,
       isInbox: isInbox ?? this.isInbox,
+      repeat: repeat ?? this.repeat,
     );
   }
 
   GoalModel prunedCheckIns() {
     final kept = checkIns.toSet().where((key) {
       final day = parseDateKey(key);
-      return day != null && containsDay(day);
+      return day != null && overlapsPeriodOf(day);
     }).toList()..sort();
     return copyWith(checkIns: kept);
   }
@@ -242,6 +257,7 @@ class GoalModel {
       'memberIds': memberIds,
       'members': members.map((m) => m.toMap()).toList(),
       if (isInbox) 'isInbox': true,
+      'repeat': repeat.name,
     };
   }
 
@@ -328,6 +344,7 @@ class GoalModel {
       members: membersList,
       memberIds: memberIdsList,
       isInbox: data['isInbox'] == true,
+      repeat: PlanPeriod.fromName(data['repeat'] as String?),
     );
   }
 

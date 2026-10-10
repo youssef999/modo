@@ -5,6 +5,7 @@ import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
+import 'package:life_daily_app/features/goals/widgets/plan_period_labels.dart';
 
 class GoalCheckInStrip extends StatelessWidget {
   const GoalCheckInStrip({super.key, required this.goal});
@@ -15,7 +16,6 @@ class GoalCheckInStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appPalette;
     final days = goal.recentDays();
-    final labels = MaterialLocalizations.of(context);
     return Row(
       children: days.map((day) {
         final checked = goal.isChecked(day);
@@ -26,7 +26,9 @@ class GoalCheckInStrip extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  labels.narrowWeekdays[day.weekday % 7],
+                  PlanPeriodLabels.cellTop(goal.repeat, day),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.caption(colors),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -49,7 +51,7 @@ class GoalCheckInStrip extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '${day.day}',
+                      PlanPeriodLabels.cellMain(goal.repeat, day),
                       style: AppTextStyles.caption(colors).copyWith(
                         color: checked
                             ? colors.onPrimary

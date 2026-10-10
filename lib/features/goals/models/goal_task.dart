@@ -1,5 +1,6 @@
 import 'package:life_daily_app/core/models/app_priority.dart';
 import 'goal_sub_task.dart';
+import 'plan_period.dart';
 
 enum GoalTaskStatus { todo, pending, inProgress, done }
 
@@ -19,6 +20,7 @@ class GoalTask {
     this.dueDate,
     this.dueTime,
     this.categoryId,
+    this.period,
   }) : status =
            status ??
            (isCompleted == true ? GoalTaskStatus.done : GoalTaskStatus.todo);
@@ -49,6 +51,12 @@ class GoalTask {
   /// Section (shared with goal categories) this task belongs to.
   final String? categoryId;
 
+  /// Span [dueDate] plans for (it then holds the period's first day);
+  /// `null` means a single day.
+  final PlanPeriod? period;
+
+  PlanPeriod get planPeriod => period ?? PlanPeriod.day;
+
   bool get isCompleted => status == GoalTaskStatus.done;
 
   /// Initials for the assignee avatar (derived from assigneeName or assigneeEmail).
@@ -78,6 +86,7 @@ class GoalTask {
     DateTime? dueDate,
     String? dueTime,
     String? categoryId,
+    PlanPeriod? period,
     bool clearAssignee = false,
     bool clearDueDate = false,
     bool clearCategory = false,
@@ -103,6 +112,7 @@ class GoalTask {
       dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
       dueTime: clearDueDate ? null : (dueTime ?? this.dueTime),
       categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
+      period: clearDueDate ? null : (period ?? this.period),
     );
   }
 
@@ -121,6 +131,7 @@ class GoalTask {
       if (dueDate != null) 'dueDate': dueDate!.toIso8601String(),
       if (dueTime != null) 'dueTime': dueTime,
       if (categoryId != null) 'categoryId': categoryId,
+      if (period != null && period != PlanPeriod.day) 'period': period!.name,
     };
   }
 
@@ -178,6 +189,9 @@ class GoalTask {
       dueDate: parsedDueDate,
       dueTime: map['dueTime'] as String?,
       categoryId: map['categoryId'] as String?,
+      period: map['period'] is String
+          ? PlanPeriod.fromName(map['period'] as String)
+          : null,
     );
   }
 }
