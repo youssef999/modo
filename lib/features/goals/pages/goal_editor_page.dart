@@ -20,9 +20,13 @@ import 'package:life_daily_app/shared/widgets/inputs/app_text_field.dart';
 import 'package:life_daily_app/shared/widgets/layout/app_scaffold.dart';
 
 class GoalEditorPage extends StatefulWidget {
-  const GoalEditorPage({super.key, this.goal});
+  const GoalEditorPage({super.key, this.goal, this.initialPeriod, this.date});
 
   final GoalModel? goal;
+
+  /// Period and day a new goal starts with, e.g. the board being viewed.
+  final PlanPeriod? initialPeriod;
+  final DateTime? date;
 
   @override
   State<GoalEditorPage> createState() => _GoalEditorPageState();
@@ -39,6 +43,7 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
   late GoalStatus _status;
   late AppPriority _priority;
   late PlanPeriod _repeat;
+  PlanPeriod? _period;
 
   @override
   void initState() {
@@ -55,7 +60,13 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
     _pickingCategory = widget.goal == null;
     _status = goal?.status ?? GoalStatus.notStarted;
     _priority = goal?.priority ?? AppPriority.medium;
-    _repeat = goal?.repeat ?? PlanPeriod.day;
+    _repeat = goal?.repeat ?? widget.initialPeriod ?? PlanPeriod.day;
+    _period = goal == null ? widget.initialPeriod : goal.period;
+    final period = _period;
+    if (goal == null && period != null) {
+      _dueAt = period.endOf(widget.date ?? today);
+      _startsAt = _dueAt;
+    }
   }
 
   @override
@@ -134,12 +145,15 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
                         value: _dueAt,
                         onTap: () => _pickDate(isStart: false),
                       ),
-                    ] else
+                    ] else ...[
+                      _PeriodToggle(value: _period, onChanged: _setPeriod),
+                      const SizedBox(height: AppSpacing.md),
                       _DateTile(
                         label: LocaleKeys.goalDate.tr,
                         value: _dueAt,
                         onTap: () => _pickDate(isStart: false),
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -160,6 +174,17 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
           _dueAt = _repeat.defaultHabitEnd(_startsAt);
         }
       } else {
+        _startsAt = _dueAt;
+      }
+    });
+  }
+
+  void _setPeriod(PlanPeriod? period) {
+    if (period == _period) return;
+    setState(() {
+      _period = period;
+      if (period != null) {
+        _dueAt = period.endOf(_dueAt);
         _startsAt = _dueAt;
       }
     });
@@ -213,6 +238,7 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
         status: _status,
         priority: _priority,
         repeat: _repeat,
+        period: _period,
       );
     } else {
       final checkIns = _kind == GoalKind.habit
@@ -229,6 +255,8 @@ class _GoalEditorPageState extends State<GoalEditorPage> {
           status: _status,
           priority: _priority,
           repeat: _kind == GoalKind.habit ? _repeat : PlanPeriod.day,
+          period: _period,
+          clearPeriod: _kind == GoalKind.habit || _period == null,
           checkIns: checkIns,
           updatedAt: DateTime.now(),
         ),
@@ -466,6 +494,48 @@ class _RepeatToggle extends StatelessWidget {
                   label: PlanPeriodLabels.repeat(period),
                   selected: value == period,
                   onTap: () => onChanged(period),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Daily … Yearly or General (`null`) for a one-off goal.
+class _PeriodToggle extends StatelessWidget {
+  const _PeriodToggle({required this.value, required this.onChanged});
+
+  final PlanPeriod? value;
+  final ValueChanged<PlanPeriod?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appPalette;
+    final options = <PlanPeriod?>[...PlanPeriod.values, null];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          LocaleKeys.goalPeriod.tr,
+          style: AppTextStyles.caption(
+            colors,
+          ).copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          children: [
+            for (var i = 0; i < options.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: _KindChip(
+                  label: options[i] == null
+                      ? LocaleKeys.periodGeneral.tr
+                      : PlanPeriodLabels.name(options[i]!),
+                  selected: value == options[i],
+                  onTap: () => onChanged(options[i]),
                 ),
               ),
             ],

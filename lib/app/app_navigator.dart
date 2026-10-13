@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 import 'package:life_daily_app/core/bindings/initial_binding.dart';
 import 'package:life_daily_app/features/auth/bindings/auth_binding.dart';
 import 'package:life_daily_app/features/auth/pages/login_page.dart';
-import 'package:life_daily_app/features/daily/bindings/daily_binding.dart';
 import 'package:life_daily_app/features/finance/bindings/finance_binding.dart';
 import 'package:life_daily_app/features/finance/models/finance_category_role.dart';
 import 'package:life_daily_app/features/finance/models/finance_entry.dart';
@@ -12,6 +11,7 @@ import 'package:life_daily_app/features/finance/pages/finance_entry_page.dart';
 import 'package:life_daily_app/features/finance/pages/finance_month_plan_page.dart';
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
+import 'package:life_daily_app/features/goals/models/plan_period.dart';
 import 'package:life_daily_app/features/goals/pages/goal_category_page.dart';
 import 'package:life_daily_app/features/goals/pages/goal_detail_page.dart';
 import 'package:life_daily_app/features/goals/pages/goal_editor_page.dart';
@@ -44,9 +44,13 @@ class AppNavigator {
         Future<T?>.value();
   }
 
-  static Future<T?> toGoalEditor<T>({GoalModel? goal}) {
+  static Future<T?> toGoalEditor<T>({
+    GoalModel? goal,
+    PlanPeriod? period,
+    DateTime? date,
+  }) {
     return Get.to<T>(
-          () => GoalEditorPage(goal: goal),
+          () => GoalEditorPage(goal: goal, initialPeriod: period, date: date),
           binding: GoalsBinding(),
         ) ??
         Future<T?>.value();
@@ -124,7 +128,6 @@ class AppStartBinding extends Bindings {
     GoalsBinding().dependencies();
     FinanceBinding().dependencies();
     ShellBinding().dependencies();
-    DailyBinding().dependencies();
     NotificationsBinding().dependencies();
   }
 }

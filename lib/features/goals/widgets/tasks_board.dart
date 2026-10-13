@@ -23,27 +23,33 @@ const boardColumns = [
   GoalTaskStatus.done,
 ];
 
+/// Quick add pre-filled with the board's period, date and section.
 void openBoardQuickAdd(
   BuildContext context,
-  GoalsController controller,
-  GoalTaskStatus status,
-) {
+  GoalsController controller, [
+  GoalTaskStatus? status,
+]) {
+  final scope = controller.boardScope;
   QuickAddSheet.show(
     context,
     status: status,
     categoryId: controller.selectedCategoryId,
+    date: scope.isGeneral ? null : scope.start,
+    period: scope.period,
+    undated: scope.isGeneral,
   );
 }
 
 /// Drag-and-drop board mixing big tasks (goals) and standalone tasks.
 class TasksBoard extends StatelessWidget {
-  const TasksBoard({super.key, required this.controller});
+  const TasksBoard({super.key, required this.controller, required this.items});
 
   final GoalsController controller;
+  final Map<GoalTaskStatus, List<BoardItem>> items;
 
   @override
   Widget build(BuildContext context) {
-    final grouped = controller.boardItems;
+    final grouped = items;
     return AppBoardColumns(
       count: boardColumns.length,
       padding: EdgeInsets.only(

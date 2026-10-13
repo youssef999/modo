@@ -6,7 +6,6 @@ import 'package:life_daily_app/features/shell/controllers/shell_controller.dart'
 extension ShellAreaStyle on ShellArea {
   String get titleKey {
     return switch (this) {
-      ShellArea.today => LocaleKeys.navPlan,
       ShellArea.goals => LocaleKeys.navTasks,
       ShellArea.finance => LocaleKeys.financeTitle,
     };
@@ -14,7 +13,6 @@ extension ShellAreaStyle on ShellArea {
 
   String get subtitleKey {
     return switch (this) {
-      ShellArea.today => LocaleKeys.todayHabitsTasksCount,
       ShellArea.goals => LocaleKeys.allMyTasks,
       ShellArea.finance => LocaleKeys.financeSubtitle,
     };
@@ -22,7 +20,6 @@ extension ShellAreaStyle on ShellArea {
 
   IconData get icon {
     return switch (this) {
-      ShellArea.today => Icons.calendar_today_rounded,
       ShellArea.goals => Icons.task_alt_rounded,
       ShellArea.finance => Icons.account_balance_wallet_rounded,
     };
@@ -30,8 +27,7 @@ extension ShellAreaStyle on ShellArea {
 
   Color accent(AppPalette colors) {
     return switch (this) {
-      ShellArea.today => colors.primary,
-      ShellArea.goals => colors.info,
+      ShellArea.goals => colors.primary,
       ShellArea.finance => colors.success,
     };
   }

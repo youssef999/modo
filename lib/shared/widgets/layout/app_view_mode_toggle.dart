@@ -27,6 +27,7 @@ class AppViewModeToggle extends StatelessWidget {
     AppViewMode.list => Icons.view_list_rounded,
     AppViewMode.grid => Icons.grid_view_rounded,
     AppViewMode.kanban => Icons.view_kanban_rounded,
+    AppViewMode.habits => Icons.calendar_view_month_rounded,
   };
 
   void _select(AppViewMode next) {

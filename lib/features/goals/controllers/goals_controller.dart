@@ -9,6 +9,7 @@ import 'package:life_daily_app/features/auth/services/i_auth_service.dart';
 import 'package:life_daily_app/features/notifications/controllers/daily_reminder_controller.dart';
 
 import '../models/board_item.dart';
+import '../models/board_scope.dart';
 import '../models/daily_task_groups.dart';
 import '../models/goal_category.dart';
 import '../models/goal_invite.dart';
@@ -120,6 +121,7 @@ class GoalsController extends GetxController {
   void onInit() {
     super.onInit();
     _loadViewMode();
+    _loadBoardScope();
     load();
   }
 
@@ -299,6 +301,7 @@ class GoalsController extends GetxController {
     GoalStatus status = GoalStatus.notStarted,
     AppPriority priority = AppPriority.medium,
     PlanPeriod repeat = PlanPeriod.day,
+    PlanPeriod? period,
   }) async {
     var goal = await _repository.create(
       ownerId: ownerId,
@@ -311,8 +314,14 @@ class GoalsController extends GetxController {
     );
     if (status != GoalStatus.notStarted ||
         priority != AppPriority.medium ||
-        repeat != PlanPeriod.day) {
-      goal = goal.copyWith(status: status, priority: priority, repeat: repeat);
+        repeat != PlanPeriod.day ||
+        period != null) {
+      goal = goal.copyWith(
+        status: status,
+        priority: priority,
+        repeat: repeat,
+        period: kind == GoalKind.habit ? null : period,
+      );
       await _repository.update(goal);
     }
     goals = [...goals, goal]..sort((a, b) => a.dueAt.compareTo(b.dueAt));
@@ -643,13 +652,6 @@ class GoalsController extends GetxController {
   // ---------------------------------------------------------------------------
   // Daily Tracking Hub & Kanban Board
   // ---------------------------------------------------------------------------
-  DateTime selectedDailyDate = DateTime.now();
-
-  void setSelectedDailyDate(DateTime date) {
-    selectedDailyDate = date;
-    update(['goals', 'daily']);
-  }
-
   /// Daily habits running on [date]; longer repeats live in the plan views.
   List<GoalModel> habitsForDate(DateTime date) {
     return goals
@@ -669,7 +671,7 @@ class GoalsController extends GetxController {
 
   Future<void> toggleHabitForDate(GoalModel habit, DateTime date) async {
     await toggleCheckIn(habit, date);
-    update(['goals', 'daily']);
+    update(['goals']);
   }
 
   Future<void> stepTracker(
@@ -685,7 +687,7 @@ class GoalsController extends GetxController {
       newVal = tracker.target;
     }
     await updateTrackerValue(goal, trackerId, newVal);
-    update(['goals', 'daily']);
+    update(['goals']);
   }
 
   DailyTaskGroups dailyTaskGroups(DateTime date, {DateTime? now}) {
@@ -761,42 +763,90 @@ class GoalsController extends GetxController {
     };
   }
 
-  /// Status shown by the phone board's tabs.
-  GoalTaskStatus boardTab = GoalTaskStatus.todo;
-
-  void selectBoardTab(GoalTaskStatus status) {
-    if (boardTab == status) return;
-    boardTab = status;
-    update(['goals']);
-  }
-
   List<GoalModel> get archivedGoals =>
       realGoals.where((goal) => goal.isArchived).toList();
 
-  /// Big tasks and standalone inbox tasks grouped into the shared status
-  /// columns, filtered by [selectedCategoryId].
-  Map<GoalTaskStatus, List<BoardItem>> get boardItems {
+  /// Status sections folded in the list view; Done starts folded.
+  final Set<GoalTaskStatus> collapsedStatuses = {GoalTaskStatus.done};
+
+  void toggleStatusCollapsed(GoalTaskStatus status) {
+    if (!collapsedStatuses.remove(status)) collapsedStatuses.add(status);
+    update(['goals']);
+  }
+
+  /// Which period the board shows (Daily … Yearly, or General).
+  BoardScope boardScope = BoardScope();
+
+  void _loadBoardScope() {
+    final saved = _storage.read<String>(StorageKeys.boardPeriod);
+    final period = saved == generalPeriodName
+        ? null
+        : PlanPeriod.tryParse(saved) ?? PlanPeriod.day;
+    boardScope = BoardScope(period: period);
+  }
+
+  static const String generalPeriodName = 'general';
+
+  void setBoardPeriod(PlanPeriod? period) {
+    if (boardScope.period == period) return;
+    boardScope = boardScope.withPeriod(period).toNow();
+    _storage.write(StorageKeys.boardPeriod, period?.name ?? generalPeriodName);
+    update(['goals']);
+  }
+
+  void moveBoardScope(int count) {
+    boardScope = boardScope.shift(count);
+    update(['goals']);
+  }
+
+  void boardScopeToNow() {
+    boardScope = boardScope.toNow();
+    update(['goals']);
+  }
+
+  /// Goals and tasks of the board's period grouped into the shared status
+  /// columns, filtered by [selectedCategoryId]. A task whose goal is
+  /// already on the board stays inside that goal's card.
+  Map<GoalTaskStatus, List<BoardItem>> boardItemsFor({DateTime? now}) {
     final map = <GoalTaskStatus, List<BoardItem>>{
       for (final s in GoalTaskStatus.values) s: [],
     };
+    final scope = boardScope;
     final section = selectedCategoryId;
     final hasSection = section != null && section.isNotEmpty;
 
+    final shownGoals = <String>{};
     final bigTasks = realGoals.where((g) => !g.isArchived).toList()
       ..sort((a, b) => a.boardOrder.compareTo(b.boardOrder));
     for (final goal in bigTasks) {
       if (hasSection && goal.category != section) continue;
+      if (!scope.includesGoal(goal, now: now)) continue;
+      shownGoals.add(goal.id);
       map[boardColumnOf(goal)]!.add(GoalBoardItem(goal));
     }
 
-    final inbox = inboxGoal;
-    if (inbox != null) {
-      for (final task in inbox.tasks) {
-        if (hasSection && taskSectionId(inbox, task) != section) continue;
-        map[task.status]!.add(TaskBoardItem(inbox, task));
+    for (final goal in goals) {
+      if (shownGoals.contains(goal.id)) continue;
+      for (final task in goal.tasks) {
+        if (hasSection && taskSectionId(goal, task) != section) continue;
+        if (!scope.includesTask(goal, task, now: now)) continue;
+        map[task.status]!.add(TaskBoardItem(goal, task));
       }
     }
     return map;
+  }
+
+  Map<GoalTaskStatus, List<BoardItem>> get boardItems => boardItemsFor();
+
+  /// Finished cards out of all cards on the board.
+  ({int done, int total}) boardProgress(
+    Map<GoalTaskStatus, List<BoardItem>> items,
+  ) {
+    var total = 0;
+    for (final list in items.values) {
+      total += list.length;
+    }
+    return (done: items[GoalTaskStatus.done]?.length ?? 0, total: total);
   }
 
   Future<void> moveBoardItem(BoardItem item, GoalTaskStatus column) {
@@ -896,7 +946,7 @@ class GoalsController extends GetxController {
       updatedAt: DateTime.now(),
     );
     await editGoal(next);
-    update(['goals', 'daily']);
+    update(['goals']);
   }
 
   // ---------------------------------------------------------------------------

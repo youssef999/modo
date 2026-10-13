@@ -18,7 +18,7 @@ class StorageKeys {
   static const String journalFolders = 'journal_folders';
   static const String workViewMode = 'work_view_mode';
   static const String goalsViewMode = 'goals_view_mode';
-  static const String planPeriod = 'plan_period';
+  static const String boardPeriod = 'board_period';
   static const String dailyReminderEnabled = 'daily_reminder_enabled';
   static const String journalViewMode = 'journal_view_mode';
 }

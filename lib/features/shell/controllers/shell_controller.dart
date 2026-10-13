@@ -6,7 +6,7 @@ import 'package:life_daily_app/features/finance/controllers/finance_controller.d
 import 'package:life_daily_app/features/shell/models/quick_add_type.dart';
 
 /// Index order matches the shell IndexedStack children.
-enum ShellArea { today, goals, finance }
+enum ShellArea { goals, finance }
 
 class ShellNavItem {
   const ShellNavItem({
@@ -21,7 +21,7 @@ class ShellNavItem {
 }
 
 class ShellController extends GetxController {
-  ShellArea area = ShellArea.today;
+  ShellArea area = ShellArea.goals;
   int sectionIndex = 0;
   bool isDrawerOpen = true;
 
@@ -59,11 +59,6 @@ class ShellController extends GetxController {
 
   List<ShellNavItem> get leftItems {
     return const [
-      ShellNavItem(
-        icon: Icons.calendar_today_rounded,
-        labelKey: LocaleKeys.navPlan,
-        area: ShellArea.today,
-      ),
       ShellNavItem(
         icon: Icons.task_alt_rounded,
         labelKey: LocaleKeys.navTasks,

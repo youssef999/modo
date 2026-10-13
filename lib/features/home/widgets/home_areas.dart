@@ -13,13 +13,6 @@ class HomeAreas extends StatelessWidget {
     return Column(
       children: [
         HomeAreaTile(
-          icon: Icons.calendar_today_rounded,
-          title: LocaleKeys.navPlan.tr,
-          subtitle: LocaleKeys.myDay.tr,
-          onTap: () => Get.find<ShellController>().selectArea(ShellArea.today),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        HomeAreaTile(
           icon: Icons.task_alt_rounded,
           title: LocaleKeys.navTasks.tr,
           subtitle: LocaleKeys.allMyTasks.tr,

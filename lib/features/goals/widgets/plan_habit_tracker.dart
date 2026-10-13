@@ -6,10 +6,11 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
-import 'package:life_daily_app/features/daily/widgets/plan_habit_grid.dart';
-import 'package:life_daily_app/features/daily/widgets/plan_section_header.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
+import 'package:life_daily_app/features/goals/models/plan_period.dart';
 import 'package:life_daily_app/features/goals/models/plan_snapshot.dart';
+import 'package:life_daily_app/features/goals/widgets/plan_habit_grid.dart';
+import 'package:life_daily_app/features/goals/widgets/plan_section_header.dart';
 import 'package:life_daily_app/features/goals/widgets/plan_period_labels.dart';
 import 'package:life_daily_app/features/shell/widgets/quick_add_sheet.dart';
 
@@ -19,10 +20,14 @@ class PlanHabitTracker extends StatelessWidget {
     super.key,
     required this.snapshot,
     required this.controller,
+    this.addRepeat,
   });
 
   final PlanSnapshot snapshot;
   final GoalsController controller;
+
+  /// How often a habit added from here repeats; the viewed period if null.
+  final PlanPeriod? addRepeat;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +55,7 @@ class PlanHabitTracker extends StatelessWidget {
               addTooltip: LocaleKeys.planAddHabit.tr,
               onAdd: () => QuickAddSheet.show(
                 context,
-                period: snapshot.period,
+                period: addRepeat ?? snapshot.period,
                 repeat: true,
               ),
             ),

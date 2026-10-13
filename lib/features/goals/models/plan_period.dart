@@ -9,11 +9,13 @@ enum PlanPeriod {
   /// Weeks run Saturday → Friday.
   static const int weekStartDay = DateTime.saturday;
 
-  static PlanPeriod fromName(String? raw) {
+  static PlanPeriod fromName(String? raw) => tryParse(raw) ?? PlanPeriod.day;
+
+  static PlanPeriod? tryParse(String? raw) {
     for (final period in values) {
       if (period.name == raw) return period;
     }
-    return PlanPeriod.day;
+    return null;
   }
 
   /// First day of the period containing [date].

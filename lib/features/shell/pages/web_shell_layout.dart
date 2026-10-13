@@ -8,19 +8,16 @@ import 'package:life_daily_app/core/theme/app_icons.dart';
 import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
-import 'package:life_daily_app/core/models/app_view_mode.dart';
 import 'package:life_daily_app/features/auth/controllers/auth_controller.dart';
 import 'package:life_daily_app/features/auth/widgets/auth_dialog.dart';
 import 'package:life_daily_app/features/auth/widgets/profile_header.dart';
 import 'package:life_daily_app/features/auth/widgets/sign_out_button.dart';
 import 'package:life_daily_app/features/finance/pages/finance_page.dart';
-import 'package:life_daily_app/features/daily/pages/daily_hub_page.dart';
-import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/pages/goals_page.dart';
 import 'package:life_daily_app/features/goals/widgets/goal_invite_banner.dart';
 import 'package:life_daily_app/features/notifications/widgets/daily_reminder_tile.dart';
 import 'package:life_daily_app/features/shell/controllers/shell_controller.dart';
-import 'package:life_daily_app/features/shell/widgets/quick_add_sheet.dart';
+import 'package:life_daily_app/features/shell/widgets/shell_quick_add.dart';
 import 'package:life_daily_app/features/shell/widgets/shell_page_title.dart';
 import 'package:life_daily_app/shared/widgets/branding/modo_brand.dart';
 import 'package:life_daily_app/shared/widgets/buttons/app_button.dart';
@@ -101,7 +98,6 @@ class WebShellLayout extends StatelessWidget {
                                   return IndexedStack(
                                     index: controller.area.index,
                                     children: const [
-                                      DailyHubPage(embed: true),
                                       GoalsPage(embed: true),
                                       FinancePage(embed: true),
                                     ],
@@ -423,8 +419,7 @@ class _WebTopHeader extends StatelessWidget {
                 AppButton(
                   label: LocaleKeys.quickAdd.tr,
                   variant: AppButtonVariant.primary,
-                  onPressed: () =>
-                      QuickAddSheet.show(context, type: controller.fabType),
+                  onPressed: () => openShellQuickAdd(context),
                 ),
               ],
             );
@@ -460,18 +455,10 @@ class _AreaCapsuleSwitcher extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _CapsuleItem(
-            icon: Icons.calendar_today_rounded,
-            label: LocaleKeys.navPlan.tr,
-            selected: currentArea == ShellArea.today,
-            activeColor: colors.primary,
-            onTap: () => onSelect(ShellArea.today),
-          ),
-          const SizedBox(width: 4),
-          _CapsuleItem(
             icon: Icons.task_alt_rounded,
             label: LocaleKeys.navTasks.tr,
             selected: currentArea == ShellArea.goals,
-            activeColor: colors.info,
+            activeColor: colors.primary,
             onTap: () => onSelect(ShellArea.goals),
           ),
           const SizedBox(width: 4),
@@ -595,50 +582,16 @@ class _WebSubNavBar extends StatelessWidget {
             child: GetBuilder<ShellController>(
               id: 'shell',
               builder: (controller) {
-                if (controller.area == ShellArea.today) {
-                  return const SizedBox.shrink();
-                }
                 final isGoals = controller.area == ShellArea.goals;
 
                 if (isGoals) {
                   return Row(
                     children: [
                       _SubTabPill(
-                        icon: Icons.view_agenda_outlined,
-                        label: LocaleKeys.navList.tr,
-                        selected:
-                            controller.sectionIndex == 0 &&
-                            (!Get.isRegistered<GoalsController>() ||
-                                Get.find<GoalsController>().viewMode !=
-                                    AppViewMode.kanban),
-                        onTap: () {
-                          controller.selectSection(0);
-                          if (Get.isRegistered<GoalsController>() &&
-                              Get.find<GoalsController>().viewMode ==
-                                  AppViewMode.kanban) {
-                            Get.find<GoalsController>().setViewMode(
-                              AppViewMode.list,
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      _SubTabPill(
                         icon: Icons.view_kanban_rounded,
-                        label: LocaleKeys.kanbanBoard.tr,
-                        selected:
-                            controller.sectionIndex == 0 &&
-                            Get.isRegistered<GoalsController>() &&
-                            Get.find<GoalsController>().viewMode ==
-                                AppViewMode.kanban,
-                        onTap: () {
-                          controller.selectSection(0);
-                          if (Get.isRegistered<GoalsController>()) {
-                            Get.find<GoalsController>().setViewMode(
-                              AppViewMode.kanban,
-                            );
-                          }
-                        },
+                        label: LocaleKeys.navBoard.tr,
+                        selected: controller.sectionIndex == 0,
+                        onTap: () => controller.selectSection(0),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       _SubTabPill(

@@ -14,17 +14,13 @@ class ShellPageTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appPalette;
-    final locale = MaterialLocalizations.of(context);
     return GetBuilder<ShellController>(
       id: 'shell',
       builder: (controller) {
         final area = controller.area;
-        final subtitle = area == ShellArea.today
-            ? locale.formatFullDate(DateTime.now())
-            : area.subtitleKey.tr;
         return AppPageTitle(
           title: area.titleKey.tr,
-          subtitle: subtitle,
+          subtitle: area.subtitleKey.tr,
           icon: area.icon,
           accent: area.accent(colors),
           compact: compact,

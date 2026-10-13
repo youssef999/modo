@@ -2,23 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:life_daily_app/core/models/app_view_mode.dart';
 import 'package:life_daily_app/core/storage/i_storage.dart';
 import 'package:life_daily_app/core/storage/memory_storage.dart';
 import 'package:life_daily_app/features/auth/models/app_user.dart';
 import 'package:life_daily_app/features/auth/services/i_auth_service.dart';
-import 'package:life_daily_app/features/daily/controllers/plan_controller.dart';
-import 'package:life_daily_app/features/daily/widgets/plan_breakdown.dart';
-import 'package:life_daily_app/features/daily/widgets/plan_habit_tracker.dart';
-import 'package:life_daily_app/features/daily/widgets/plan_tasks_card.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
 import 'package:life_daily_app/features/goals/models/board_item.dart';
+import 'package:life_daily_app/features/goals/models/board_scope.dart';
 import 'package:life_daily_app/features/goals/models/daily_task_groups.dart';
 import 'package:life_daily_app/features/goals/models/goal_category.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/models/goal_task.dart';
 import 'package:life_daily_app/features/goals/models/plan_period.dart';
 import 'package:life_daily_app/features/goals/repositories/i_goal_repository.dart';
-import 'package:life_daily_app/features/goals/widgets/tasks_phone_board.dart';
+import 'package:life_daily_app/features/goals/widgets/tasks_hub.dart';
 
 import '../../helpers/fake_auth_service.dart';
 
@@ -285,10 +283,65 @@ void main() {
       final all = controller.boardItems.values.expand((l) => l);
       expect(keys(all.toList()), ['task_home_task']);
     });
+
+    test('each period shows its own goals and tasks once', () async {
+      final now = DateTime(2026, 10, 14);
+      repo.goals = [
+        _goal(
+          'g_week',
+          tasks: [
+            GoalTask(id: 'in_week_goal', title: 'Run', dueDate: now),
+            GoalTask(
+              id: 'week_step',
+              title: 'Plan',
+              dueDate: PlanPeriod.week.startOf(now),
+              period: PlanPeriod.week,
+            ),
+          ],
+        ).copyWith(period: PlanPeriod.week, dueAt: now),
+        _goal('g_general'),
+        _goal(
+          'g_inbox',
+          tasks: [
+            GoalTask(id: 'today', title: 'Call', dueDate: now),
+            const GoalTask(id: 'anytime', title: 'Read'),
+          ],
+        ).copyWith(isInbox: true),
+      ];
+      await controller.load();
+
+      List<String> visible() => controller
+          .boardItemsFor(now: now)
+          .values
+          .expand((l) => l)
+          .map((i) => i.key)
+          .toList();
+
+      controller.boardScope = BoardScope(period: PlanPeriod.day, anchor: now);
+      expect(visible(), ['task_in_week_goal', 'task_today']);
+
+      controller.boardScope = BoardScope(period: PlanPeriod.week, anchor: now);
+      expect(visible(), ['goal_g_week']);
+
+      controller.boardScope = BoardScope(anchor: now);
+      expect(visible(), unorderedEquals(['goal_g_general', 'task_anytime']));
+
+      final progress = controller.boardProgress(
+        controller.boardItemsFor(now: now),
+      );
+      expect(progress, (done: 0, total: 2));
+    });
+
+    test('goal period survives toMap/fromMap', () {
+      final goal = _goal('g').copyWith(period: PlanPeriod.month);
+      expect(GoalModel.fromMap('g', goal.toMap()).period, PlanPeriod.month);
+      expect(GoalModel.fromMap('g', _goal('g').toMap()).period, isNull);
+      expect(goal.copyWith(clearPeriod: true).period, isNull);
+    });
   });
 
-  testWidgets('phone board shows one status tab at a time', (tester) async {
-    tester.view.physicalSize = const Size(390, 800);
+  testWidgets('phone list folds status sections', (tester) async {
+    tester.view.physicalSize = const Size(390, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     repo.goals = [
@@ -303,20 +356,12 @@ void main() {
       ).copyWith(isInbox: true),
     ];
     await tester.runAsync(controller.load);
-
     Get.put(controller);
+    controller.setBoardPeriod(null);
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: GetBuilder<GoalsController>(
-            id: 'goals',
-            builder: (c) => Builder(
-              builder: (context) => CustomScrollView(
-                slivers: TasksPhoneBoard.slivers(context, c),
-              ),
-            ),
-          ),
-        ),
+      const MaterialApp(
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(body: TasksHub()),
       ),
     );
     expect(tester.takeException(), isNull);
@@ -328,7 +373,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(TextField), findsOneWidget);
 
-    controller.selectBoardTab(GoalTaskStatus.done);
+    controller.toggleStatusCollapsed(GoalTaskStatus.todo);
     await tester.pump();
     expect(find.text('GYM'), findsNothing);
   });
@@ -467,78 +512,76 @@ void main() {
       expect(controller.habitsForDate(wednesday), isEmpty);
     });
 
+    final expected = <PlanPeriod?, String>{
+      PlanPeriod.day: 'Day task',
+      PlanPeriod.week: 'Weekly goal',
+      PlanPeriod.month: 'Month task',
+      PlanPeriod.year: 'Year goal',
+      null: 'Loose',
+    };
     for (final width in [390.0, 1400.0]) {
-      for (final period in [PlanPeriod.week, PlanPeriod.month]) {
-        testWidgets('${period.name} plan lays out at width $width', (
-          tester,
-        ) async {
-          tester.view.physicalSize = Size(width, 2400);
-          tester.view.devicePixelRatio = 1;
-          addTearDown(tester.view.reset);
-          final now = DateTime.now();
-          repo.goals = [
-            _goal(
-              'g1',
-              tasks: [
-                GoalTask(
-                  id: 'span',
-                  title: 'Span task',
-                  dueDate: period.startOf(now),
-                  period: period,
-                ),
-                GoalTask(id: 'day', title: 'Day task', dueDate: now),
-              ],
-            ),
-            _goal('h1', title: 'Water').copyWith(
-              kind: GoalKind.habit,
-              startsAt: now.subtract(const Duration(days: 40)),
-              dueAt: now.add(const Duration(days: 40)),
-            ),
-            _goal('h2', title: 'Long run').copyWith(
-              kind: GoalKind.habit,
-              repeat: PlanPeriod.week,
-              startsAt: now.subtract(const Duration(days: 40)),
-              dueAt: now.add(const Duration(days: 40)),
-            ),
-          ];
-          await tester.runAsync(controller.load);
-          Get.put(controller);
-          final plan = PlanController(Get.find<IStorage>())..period = period;
-
-          await tester.pumpWidget(
-            MaterialApp(
-              localizationsDelegates: GlobalMaterialLocalizations.delegates,
-              home: Scaffold(
-                body: Builder(
-                  builder: (context) {
-                    final snapshot = plan.snapshot(controller.goals);
-                    return ListView(
-                      children: [
-                        PlanHabitTracker(
-                          snapshot: snapshot,
-                          controller: controller,
-                        ),
-                        PlanTasksCard(
-                          snapshot: snapshot,
-                          controller: controller,
-                        ),
-                        PlanBreakdown(
-                          snapshot: snapshot,
-                          plan: plan,
-                          goals: controller,
-                        ),
-                      ],
-                    );
-                  },
-                ),
+      for (final entry in expected.entries) {
+        testWidgets(
+          '${entry.key?.name ?? 'general'} board lays out at width $width',
+          (tester) async {
+            tester.view.physicalSize = Size(width, 2400);
+            tester.view.devicePixelRatio = 1;
+            addTearDown(tester.view.reset);
+            final now = DateTime.now();
+            repo.goals = [
+              _goal(
+                'g_week',
+                title: 'Weekly goal',
+                tasks: [GoalTask(id: 'day', title: 'Day task', dueDate: now)],
+              ).copyWith(period: PlanPeriod.week, dueAt: now),
+              _goal(
+                'g_year',
+                title: 'Year goal',
+              ).copyWith(period: PlanPeriod.year, dueAt: now),
+              _goal(
+                'g_inbox',
+                tasks: [
+                  GoalTask(
+                    id: 'month',
+                    title: 'Month task',
+                    dueDate: PlanPeriod.month.startOf(now),
+                    period: PlanPeriod.month,
+                  ),
+                  const GoalTask(id: 'loose', title: 'Loose'),
+                ],
+              ).copyWith(isInbox: true),
+              _goal('h1', title: 'Water').copyWith(
+                kind: GoalKind.habit,
+                startsAt: now.subtract(const Duration(days: 40)),
+                dueAt: now.add(const Duration(days: 40)),
               ),
-            ),
-          );
-          expect(tester.takeException(), isNull);
-          expect(find.text('Water'), findsOneWidget);
-          expect(find.text('Long run'), findsOneWidget);
-          expect(find.text('Span task'), findsOneWidget);
-        });
+            ];
+            await tester.runAsync(controller.load);
+            Get.put(controller);
+            controller.setBoardPeriod(entry.key);
+            controller.setViewMode(
+              width > 1000 ? AppViewMode.kanban : AppViewMode.list,
+            );
+
+            await tester.pumpWidget(
+              const MaterialApp(
+                localizationsDelegates: GlobalMaterialLocalizations.delegates,
+                home: Scaffold(body: TasksHub()),
+              ),
+            );
+            expect(tester.takeException(), isNull);
+            expect(find.text(entry.value), findsOneWidget);
+
+            controller.setViewMode(AppViewMode.habits);
+            await tester.pump();
+            expect(tester.takeException(), isNull);
+            // A year has too many days for a daily habit row.
+            expect(
+              find.text('Water'),
+              entry.key == PlanPeriod.year ? findsNothing : findsOneWidget,
+            );
+          },
+        );
       }
     }
   });

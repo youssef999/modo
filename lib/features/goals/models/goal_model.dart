@@ -38,6 +38,7 @@ class GoalModel {
     this.memberIds = const [],
     this.isInbox = false,
     this.repeat = PlanPeriod.day,
+    this.period,
   });
 
   final String id;
@@ -69,6 +70,14 @@ class GoalModel {
   /// How often a habit repeats. Each check-in key is the first day of a
   /// repetition (the day itself for daily habits).
   final PlanPeriod repeat;
+
+  /// The period a one-off goal is planned for, ending on [dueAt].
+  /// `null` means a general goal with no period.
+  final PlanPeriod? period;
+
+  /// Which board period the goal belongs to: habits by how often they
+  /// repeat, other goals by [period].
+  PlanPeriod? get planPeriod => isHabit ? repeat : period;
 
   bool get isArchived => status == GoalStatus.archived;
   bool get isActive =>
@@ -204,6 +213,8 @@ class GoalModel {
     List<String>? memberIds,
     bool? isInbox,
     PlanPeriod? repeat,
+    PlanPeriod? period,
+    bool clearPeriod = false,
   }) {
     return GoalModel(
       id: id,
@@ -226,6 +237,7 @@ class GoalModel {
       memberIds: memberIds ?? this.memberIds,
       isInbox: isInbox ?? this.isInbox,
       repeat: repeat ?? this.repeat,
+      period: clearPeriod ? null : period ?? this.period,
     );
   }
 
@@ -258,6 +270,7 @@ class GoalModel {
       'members': members.map((m) => m.toMap()).toList(),
       if (isInbox) 'isInbox': true,
       'repeat': repeat.name,
+      if (period != null) 'period': period!.name,
     };
   }
 
@@ -345,6 +358,7 @@ class GoalModel {
       memberIds: memberIdsList,
       isInbox: data['isInbox'] == true,
       repeat: PlanPeriod.fromName(data['repeat'] as String?),
+      period: PlanPeriod.tryParse(data['period'] as String?),
     );
   }
 

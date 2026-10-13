@@ -30,6 +30,7 @@ class QuickAddTaskForm extends StatefulWidget {
     this.categoryId,
     this.period,
     this.repeat = false,
+    this.undated = false,
   });
 
   final VoidCallback onDone;
@@ -39,6 +40,9 @@ class QuickAddTaskForm extends StatefulWidget {
   final String? categoryId;
   final PlanPeriod? period;
   final bool repeat;
+
+  /// Starts with "Anytime" (no date), e.g. from the General board.
+  final bool undated;
 
   @override
   State<QuickAddTaskForm> createState() => _QuickAddTaskFormState();
@@ -66,7 +70,9 @@ class _QuickAddTaskFormState extends State<QuickAddTaskForm> {
     _repeat = widget.repeat;
     _dueDate =
         widget.date ??
-        (widget.status != null ? null : DateTime(now.year, now.month, now.day));
+        (widget.status != null || widget.undated
+            ? null
+            : DateTime(now.year, now.month, now.day));
     if (_isSpan) _dueDate = _period.startOf(_dueDate ?? now);
     final initialGoal = widget.goalId == null
         ? null

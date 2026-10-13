@@ -366,7 +366,6 @@ class LocaleKeys {
   static const String todayFinance = 'today_finance';
   static const String todayCompleted = 'today_completed';
   static const String habitEveryDay = 'habit_every_day';
-  static const String navPlan = 'nav_plan';
   static const String planDay = 'plan_day';
   static const String planWeek = 'plan_week';
   static const String planMonth = 'plan_month';
@@ -378,18 +377,10 @@ class LocaleKeys {
   static const String planNextMonth = 'plan_next_month';
   static const String planNextYear = 'plan_next_year';
   static const String planBackToNow = 'plan_back_to_now';
-  static const String planWeekTasks = 'plan_week_tasks';
-  static const String planMonthTasks = 'plan_month_tasks';
-  static const String planYearTasks = 'plan_year_tasks';
-  static const String planDays = 'plan_days';
-  static const String planWeeks = 'plan_weeks';
-  static const String planMonths = 'plan_months';
   static const String planHabitTracker = 'plan_habit_tracker';
   static const String planNoHabits = 'plan_no_habits';
   static const String planNoTasks = 'plan_no_tasks';
   static const String planAddHabit = 'plan_add_habit';
-  static const String planMore = 'plan_more';
-  static const String planDoneOf = 'plan_done_of';
   static const String planFor = 'plan_for';
   static const String planRepeat = 'plan_repeat';
   static const String repeatDaily = 'repeat_daily';
@@ -397,6 +388,10 @@ class LocaleKeys {
   static const String repeatMonthly = 'repeat_monthly';
   static const String repeatYearly = 'repeat_yearly';
   static const String habitRepeat = 'habit_repeat';
+  static const String periodGeneral = 'period_general';
+  static const String goalPeriod = 'goal_period';
+  static const String previous = 'previous';
+  static const String next = 'next';
   static const String habitDaysPerWeek = 'habit_days_per_week';
   static const String spendToday = 'spend_today';
   static const String dailySafeLimit = 'daily_safe_limit';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:life_daily_app/app/app_navigator.dart';
 import 'package:life_daily_app/core/constants/locale_keys.dart';
 import 'package:life_daily_app/core/theme/app_colors.dart';
 import 'package:life_daily_app/core/theme/app_icons.dart';
@@ -7,6 +8,7 @@ import 'package:life_daily_app/core/theme/app_radius.dart';
 import 'package:life_daily_app/core/theme/app_spacing.dart';
 import 'package:life_daily_app/core/theme/app_text_styles.dart';
 import 'package:life_daily_app/features/goals/controllers/goals_controller.dart';
+import 'package:life_daily_app/features/goals/models/board_scope.dart';
 import 'package:life_daily_app/features/goals/models/goal_model.dart';
 import 'package:life_daily_app/features/goals/models/goal_task.dart';
 import 'package:life_daily_app/features/goals/widgets/app_priority_picker.dart';
@@ -109,6 +111,22 @@ class _BoardTaskCardState extends State<BoardTaskCard> {
               runSpacing: AppSpacing.xs,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                if (!goal.isInbox)
+                  InkWell(
+                    onTap: () => AppNavigator.toGoalDetail(goal.id),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    child: BoardChip(
+                      label: goal.title,
+                      icon: Icons.flag_rounded,
+                      tone: colors.primary,
+                    ),
+                  ),
+                if (BoardScope.isOverdue(task))
+                  BoardChip(
+                    label: LocaleKeys.overdue.tr,
+                    icon: Icons.schedule_rounded,
+                    tone: colors.error,
+                  ),
                 if (section != null)
                   BoardChip(
                     label: controller.categoryLabel(section),

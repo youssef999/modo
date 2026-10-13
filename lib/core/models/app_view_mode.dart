@@ -1,1 +1,1 @@
-enum AppViewMode { list, grid, kanban }
+enum AppViewMode { list, grid, kanban, habits }

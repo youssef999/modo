@@ -34,9 +34,13 @@ class QuickAddSheet {
     String? categoryId,
     PlanPeriod? period,
     bool repeat = false,
+    bool undated = false,
   }) async {
+    Future<void> openOther(QuickAddType next) =>
+        _openOther(context, next, period: period, date: undated ? null : date);
+
     if (type != QuickAddType.task) {
-      await _openOther(context, type);
+      await openOther(type);
       return;
     }
     final colors = context.appPalette;
@@ -49,10 +53,11 @@ class QuickAddSheet {
       categoryId: categoryId,
       period: period,
       repeat: repeat,
+      undated: undated,
       onClose: () => Navigator.of(sheetContext).pop(),
       onSwitch: (next) {
         Navigator.of(sheetContext).pop();
-        if (context.mounted) _openOther(context, next);
+        if (context.mounted) openOther(next);
       },
     );
 
@@ -91,8 +96,10 @@ class QuickAddSheet {
 
   static Future<void> _openOther(
     BuildContext context,
-    QuickAddType type,
-  ) async {
+    QuickAddType type, {
+    PlanPeriod? period,
+    DateTime? date,
+  }) async {
     switch (type) {
       case QuickAddType.task:
         return;
@@ -103,7 +110,7 @@ class QuickAddSheet {
           await AppNavigator.toFinanceEntry(kind: FinanceKind.expense);
         }
       case QuickAddType.goal:
-        await AppNavigator.toGoalEditor();
+        await AppNavigator.toGoalEditor(period: period, date: date);
     }
   }
 }
@@ -118,6 +125,7 @@ class _QuickAddPanel extends StatelessWidget {
     this.categoryId,
     this.period,
     this.repeat = false,
+    this.undated = false,
   });
 
   final VoidCallback onClose;
@@ -128,6 +136,7 @@ class _QuickAddPanel extends StatelessWidget {
   final String? categoryId;
   final PlanPeriod? period;
   final bool repeat;
+  final bool undated;
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +181,7 @@ class _QuickAddPanel extends StatelessWidget {
             categoryId: categoryId,
             period: period,
             repeat: repeat,
+            undated: undated,
             onDone: onClose,
           ),
         ],
